@@ -1,5 +1,6 @@
 package com.reservation.dto;
 
+import com.reservation.entity.Reservation;
 import com.reservation.entity.ReservationStatus;
 import lombok.Data;
 
@@ -26,4 +27,16 @@ public class ReservationResponse {
     private ReservationStatus reservationStatus;
 
     private LocalDateTime createdAt;
+
+    public ReservationResponse(Reservation reservation) {
+        this.id = reservation.getId();
+        this.bungalowId = reservation.getBungalowId();
+        this.guestName = reservation.getGuestName();
+        this.guestEmail = reservation.getGuestEmail();
+        this.arrivalDate = reservation.getArrivalDate();
+        this.departureDate = reservation.getDepartureDate();
+        this.totalAmount = reservation.getTotalAmount();
+        this.reservationStatus = reservation.getReservationStatus();
+        this.createdAt = reservation.getCreatedAt();
+    }
 }
