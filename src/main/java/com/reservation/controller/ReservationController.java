@@ -11,21 +11,28 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
+@RequestMapping("/reservation")
 @RequiredArgsConstructor
-public class TestController {
-    @GetMapping("/test")
-    public String testMethod(){
-        return "Test Get";
-    }
+public class ReservationController {
 
     private final ReservationService reservationService;
 
-    @PostMapping("/reservation")
+    @PostMapping("/create")
     public ResponseEntity<ReservationResponse> createReservation(
             @Valid @RequestBody ReservationRequest request) {
 
         ReservationResponse response = reservationService.createReservation(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/update/{id}")
+    public ResponseEntity<ReservationResponse> updateReservation(
+            @Valid @RequestBody ReservationRequest request , @PathVariable Integer id) {
+
+        ReservationResponse response = reservationService.updateReservation(request , id);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -38,12 +45,14 @@ public class TestController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/bungalow/{id}")
+    public ResponseEntity<List<ReservationResponse>> getByBungalowId(@PathVariable Integer id){
+        return ResponseEntity.ok(reservationService.getReservationByBungalowId(id));
+    }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ReservationResponse> getReservationById(
-            @PathVariable Integer id) {
-
-        return ResponseEntity.ok(reservationService.getReservationById(id));
+    @GetMapping("/status")
+    public ResponseEntity<List<ReservationResponse>> getByStatus(@RequestParam ReservationStatus status){
+        return ResponseEntity.ok(reservationService.getReservationByStatus(status));
     }
 
 }

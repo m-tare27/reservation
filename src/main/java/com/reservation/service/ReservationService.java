@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -56,4 +57,26 @@ public class ReservationService {
         reservation.setReservationStatus(status);
         reservationRepository.save(reservation);
     }
+
+    public ReservationResponse getReservationById(Integer id){
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(()-> new RuntimeException("Invalid Reservation Id"));
+
+        return new ReservationResponse(reservation);
+    }
+
+    public List<ReservationResponse> getReservationByBungalowId(Integer id){
+        return reservationRepository.findByBungalowId(id)
+                .stream()
+                .map(ReservationResponse::new)
+                .toList();
+    }
+
+    public List<ReservationResponse> getReservationByStatus(ReservationStatus status){
+        return reservationRepository.findByReservationStatus(status)
+                .stream()
+                .map(ReservationResponse::new)
+                .toList();
+    }
+
 }
