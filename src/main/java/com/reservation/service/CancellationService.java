@@ -101,7 +101,7 @@ public class CancellationService {
     }
 
     public List<CancellationResponse> getAllCancellationByDaysBeforeCheckIn(long days){
-        return cancellationRepository.findByDaysBeforeCheckIn(days)
+        return cancellationRepository.findByDaysBeforeCheckInEquals(days)
                 .stream()
                 .map(CancellationResponse::new)
                 .toList();

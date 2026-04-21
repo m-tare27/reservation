@@ -19,7 +19,7 @@ public interface CancellationRepository  extends JpaRepository<Cancellation , In
 
     List<Cancellation> findByCancelledAt(LocalDateTime time);
 
-    List<Cancellation> findByDaysBeforeCheckIn(long days);
+    List<Cancellation> findByDaysBeforeCheckInEquals(long days);
 
     List<Cancellation> findByRefundStatus(RefundStatus status);
 }
