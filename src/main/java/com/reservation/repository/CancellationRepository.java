@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CancellationRepository  extends JpaRepository<Cancellation , Integer> {
+    boolean existsByCancellationPolicy_Id(Integer policyId);
 }
