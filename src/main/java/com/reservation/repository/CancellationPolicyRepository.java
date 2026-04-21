@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface CancellationPolicyRepository extends JpaRepository<CancellationPolicy , Integer> {
 
@@ -15,4 +17,10 @@ public interface CancellationPolicyRepository extends JpaRepository<Cancellation
     AND (:from <= p.daysBeforeCheckInTo AND :to >= p.daysBeforeCheckInFrom)
     """)
     boolean existsOverlappingRange(int from, int to, Integer excludeId);
+
+    @Query("""
+    SELECT p FROM CancellationPolicy p
+    WHERE :days BETWEEN p.daysBeforeCheckInFrom AND p.daysBeforeCheckInTo
+""")
+    Optional<CancellationPolicy> findApplicablePolicy(long days);
 }

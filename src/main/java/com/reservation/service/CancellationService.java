@@ -6,8 +6,11 @@ import com.reservation.entity.*;
 import com.reservation.repository.CancellationPolicyRepository;
 import com.reservation.repository.CancellationRepository;
 import com.reservation.repository.ReservationRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,6 +18,7 @@ import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CancellationService {
     private final CancellationPolicyRepository cancellationPolicyRepository;
     private final ReservationRepository reservationRepository;
@@ -23,18 +27,38 @@ public class CancellationService {
 
     public CancellationResponse cancelReservation(CancellationRequest request){
         Reservation reservation = reservationRepository.findById(request.getId())
-                .orElseThrow(()-> new RuntimeException("Invalid Reservation"));
+                .orElseThrow(()-> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Invalid reservation id"
+                ));
 
-        reservation.setReservationStatus(ReservationStatus.CANCELLED);
-        Cancellation cancellation = new Cancellation();
+        if (reservation.getReservationStatus() == ReservationStatus.CANCELLED) {
+            Cancellation existing = cancellationRepository.findByReservation(reservation)
+                    .orElseThrow(()-> new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "Cancellation record missing"
+                    ));
+            return new CancellationResponse(existing);
+        }
+
 
         long days = ChronoUnit.DAYS.between(LocalDate.now() , reservation.getArrivalDate());
 
-        CancellationPolicy cancellationPolicy = cancellationPolicyRepository.findAll()
-                        .stream()
-                                .filter(x -> x.getDaysBeforeCheckInFrom() <= days && days <= x.getDaysBeforeCheckInTo())
-                                .findFirst()
-                                        .orElseThrow();
+        if (days < 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Cannot cancel after check-in date"
+            );
+        }
+
+        CancellationPolicy cancellationPolicy = cancellationPolicyRepository.findApplicablePolicy(days)
+                        .orElseThrow(() -> new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST,
+                                "No policy applicable"
+                        ));
+
+        reservation.setReservationStatus(ReservationStatus.CANCELLED);
+        Cancellation cancellation = new Cancellation();
 
         cancellation.setReservation(reservation);
         cancellation.setCancellationPolicy(cancellationPolicy);
@@ -42,12 +66,12 @@ public class CancellationService {
         cancellation.setCancelledAt(LocalDateTime.now());
         cancellation.setRefundStatus(RefundStatus.PENDING);
 
-        double paid = reservation.getTotalAmount();
-        double refund = paid * cancellationPolicy.getRefundPercentage()/100;
+
+        double refund = reservation.getTotalAmount() * cancellationPolicy.getRefundPercentage()/100;
         cancellation.setRefundAmount(refund);
         cancellation.setReason(request.getReason());
 
-        reservationRepository.save(reservation);
+
         Cancellation savedCancellation = cancellationRepository.save(cancellation);
         return new CancellationResponse(savedCancellation);
     }

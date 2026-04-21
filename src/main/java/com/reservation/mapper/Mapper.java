@@ -3,7 +3,10 @@ package com.reservation.mapper;
 import com.reservation.dto.CancellationPolicyRequest;
 import com.reservation.dto.ReservationRequest;
 import com.reservation.entity.CancellationPolicy;
+import com.reservation.entity.RefundStatus;
 import com.reservation.entity.Reservation;
+
+import java.time.LocalDateTime;
 
 public class Mapper {
     static public void mapRequestToEntity(Reservation reservation, ReservationRequest request) {
