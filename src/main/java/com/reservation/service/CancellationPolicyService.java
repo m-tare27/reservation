@@ -3,6 +3,7 @@ package com.reservation.service;
 import com.reservation.dto.CancellationPolicyRequest;
 import com.reservation.dto.CancellationPolicyResponse;
 import com.reservation.entity.CancellationPolicy;
+import com.reservation.mapper.Mapper;
 import com.reservation.repository.CancellationPolicyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,10 +16,7 @@ public class CancellationPolicyService {
     public CancellationPolicyResponse createCancellationPolicy(CancellationPolicyRequest policy){
         CancellationPolicy cancellationPolicy = new CancellationPolicy();
 
-        cancellationPolicy.setName(policy.getName());
-        cancellationPolicy.setDaysBeforeCheckInFrom(policy.getDaysBeforeCheckInFrom());
-        cancellationPolicy.setDaysBeforeCheckInTo(policy.getDaysBeforeCheckInTo());
-        cancellationPolicy.setRefundPercentage(policy.getRefundPercentage());
+        Mapper.mapRequestToEntity(cancellationPolicy , policy);
 
         CancellationPolicy savedPolicy = cancellationPolicyRepository.save(cancellationPolicy);
 
@@ -29,12 +27,7 @@ public class CancellationPolicyService {
         CancellationPolicy cancellationPolicy = cancellationPolicyRepository.findById(id)
                         .orElseThrow(()-> new RuntimeException("Invalid Policy"));
 
-        //check for correct range missing
-
-        cancellationPolicy.setName(policy.getName());
-        cancellationPolicy.setDaysBeforeCheckInFrom(policy.getDaysBeforeCheckInFrom());
-        cancellationPolicy.setDaysBeforeCheckInTo(policy.getDaysBeforeCheckInTo());
-        cancellationPolicy.setRefundPercentage(policy.getRefundPercentage());
+        Mapper.mapRequestToEntity(cancellationPolicy , policy);
 
         CancellationPolicy savedPolicy = cancellationPolicyRepository.save(cancellationPolicy);
 

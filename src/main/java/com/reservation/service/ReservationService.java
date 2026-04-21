@@ -4,15 +4,20 @@ import com.reservation.dto.ReservationRequest;
 import com.reservation.dto.ReservationResponse;
 import com.reservation.entity.Reservation;
 import com.reservation.entity.ReservationStatus;
+import com.reservation.mapper.Mapper;
 import com.reservation.repository.ReservationRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
@@ -20,12 +25,10 @@ public class ReservationService {
     public ReservationResponse createReservation(ReservationRequest request){
         Reservation reservation = new Reservation();
 
-        reservation.setBungalowId(request.getBungalowId());
-        reservation.setGuestName(request.getGuestName());
-        reservation.setGuestEmail(request.getGuestEmail());
-        reservation.setArrivalDate(request.getArrivalDate());
-        reservation.setDepartureDate(request.getDepartureDate());
-        reservation.setTotalAmount(request.getTotalAmount());
+        if (isInvalidReservationDate(request.getArrivalDate() , request.getDepartureDate()))
+            throw new RuntimeException("Invalid date input");
+
+        Mapper.mapRequestToEntity(reservation , request);
         reservation.setReservationStatus(ReservationStatus.PENDING);
         reservation.setCreatedAt(LocalDateTime.now());
 
@@ -38,12 +41,10 @@ public class ReservationService {
         Reservation reservation = reservationRepository.findById(id)
                         .orElseThrow(()-> new RuntimeException("Invalid Reservation Id"));
 
-        reservation.setBungalowId(request.getBungalowId());
-        reservation.setGuestName(request.getGuestName());
-        reservation.setGuestEmail(request.getGuestEmail());
-        reservation.setArrivalDate(request.getArrivalDate());
-        reservation.setDepartureDate(request.getDepartureDate());
-        reservation.setTotalAmount(request.getTotalAmount());
+        if (isInvalidReservationDate(request.getArrivalDate() , request.getDepartureDate()))
+            throw new RuntimeException("Invalid date input");
+
+        Mapper.mapRequestToEntity(reservation , request);
 
         Reservation savedReservation = reservationRepository.save(reservation);
 
@@ -53,6 +54,10 @@ public class ReservationService {
     public void updateReservationStatus(Integer id, ReservationStatus status){
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(()-> new RuntimeException("Invalid Reservation Id"));
+
+        if (reservation.getReservationStatus() != ReservationStatus.PENDING) {
+            throw new RuntimeException("Only pending reservations can be updated");
+        }
 
         reservation.setReservationStatus(status);
         reservationRepository.save(reservation);
@@ -79,4 +84,8 @@ public class ReservationService {
                 .toList();
     }
 
+    public boolean isInvalidReservationDate(LocalDate arrivalDate, LocalDate departureDate) {
+        return arrivalDate.isBefore(LocalDate.now()) ||
+                !departureDate.isAfter(arrivalDate);
+    }
 }
