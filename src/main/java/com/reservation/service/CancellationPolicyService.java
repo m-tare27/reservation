@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class CancellationPolicyService {
@@ -63,5 +65,22 @@ public class CancellationPolicyService {
 
         cancellationPolicyRepository.deleteById(id);
     }
+
+    public List<CancellationPolicyResponse> getCancellationPolicies(){
+        return cancellationPolicyRepository.findAll()
+                .stream()
+                .map(CancellationPolicyResponse::new)
+                .toList();
+    }
+
+    public CancellationPolicyResponse getCancellationPolicyById(Integer id){
+        CancellationPolicy policy = cancellationPolicyRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "No policy found for this id"
+                ));
+        return new CancellationPolicyResponse(policy);
+    }
+
 
 }

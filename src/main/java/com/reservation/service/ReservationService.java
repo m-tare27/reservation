@@ -8,6 +8,7 @@ import com.reservation.mapper.Mapper;
 import com.reservation.repository.ReservationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -63,6 +64,13 @@ public class ReservationService {
         reservationRepository.save(reservation);
     }
 
+    public List<ReservationResponse> getReservation() {
+        return reservationRepository.findAll()
+                .stream()
+                .map(ReservationResponse::new)
+                .toList();
+    }
+
     public ReservationResponse getReservationById(Integer id){
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(()-> new RuntimeException("Invalid Reservation Id"));
@@ -95,4 +103,5 @@ public class ReservationService {
         return arrivalDate.isBefore(LocalDate.now()) ||
                 !departureDate.isAfter(arrivalDate);
     }
+
 }

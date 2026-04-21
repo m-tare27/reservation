@@ -6,6 +6,7 @@ import com.reservation.dto.ReservationResponse;
 import com.reservation.dto.UpdateReservationStatusRequest;
 import com.reservation.entity.ReservationStatus;
 import com.reservation.service.ReservationService;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -46,9 +47,19 @@ public class ReservationController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping
+    public ResponseEntity<List<ReservationResponse>> getAllReservations(){
+        return ResponseEntity.ok(reservationService.getReservation());
+    }
+
     @GetMapping("/bungalow/{id}")
     public ResponseEntity<List<ReservationResponse>> getByBungalowId(@PathVariable Integer id){
         return ResponseEntity.ok(reservationService.getReservationByBungalowId(id));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ReservationResponse> getById(@PathVariable Integer id){
+        return ResponseEntity.ok(reservationService.getReservationById(id));
     }
 
     @GetMapping("/status")

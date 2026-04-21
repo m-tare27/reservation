@@ -15,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -74,5 +75,42 @@ public class CancellationService {
 
         Cancellation savedCancellation = cancellationRepository.save(cancellation);
         return new CancellationResponse(savedCancellation);
+    }
+
+    public CancellationResponse getCancellationById(Integer id){
+        Cancellation cancellation =  cancellationRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "No cancellations for this id"
+                ));
+        return new CancellationResponse(cancellation);
+    }
+
+    public List<CancellationResponse> getAllCancellation(){
+        return cancellationRepository.findAll()
+                .stream()
+                .map(CancellationResponse::new)
+                .toList();
+    }
+
+    public List<CancellationResponse> getAllCancellationByCancelledAt(LocalDateTime time){
+        return cancellationRepository.findByCancelledAt(time)
+                .stream()
+                .map(CancellationResponse::new)
+                .toList();
+    }
+
+    public List<CancellationResponse> getAllCancellationByDaysBeforeCheckIn(long days){
+        return cancellationRepository.findByDaysBeforeCheckIn(days)
+                .stream()
+                .map(CancellationResponse::new)
+                .toList();
+    }
+
+    public List<CancellationResponse> getAllCancellationByRefundStatus(RefundStatus status){
+        return cancellationRepository.findByRefundStatus(status)
+                .stream()
+                .map(CancellationResponse::new)
+                .toList();
     }
 }

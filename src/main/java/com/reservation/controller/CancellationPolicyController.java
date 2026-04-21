@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/policy")
 @RequiredArgsConstructor
@@ -35,4 +37,15 @@ public class CancellationPolicyController {
         cancellationPolicyService.deleteCancellationPolicy(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping
+    public ResponseEntity<List<CancellationPolicyResponse>> getAllPolicies(){
+        return ResponseEntity.ok(cancellationPolicyService.getCancellationPolicies());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CancellationPolicyResponse> getById(@PathVariable Integer id){
+        return ResponseEntity.ok(cancellationPolicyService.getCancellationPolicyById(id));
+    }
+
 }
