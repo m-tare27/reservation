@@ -23,7 +23,8 @@ public class Cancellation {
 
     String reason;
 
-    @OneToOne(mappedBy = "cancellation")
+    @OneToOne
+    @JoinColumn(name = "reservation_id")
     private Reservation reservation;
 
     @ManyToOne

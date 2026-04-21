@@ -31,7 +31,6 @@ public class Reservation {
 
     LocalDateTime createdAt;
 
-    @OneToOne
-    @JoinColumn(name = "reservation_id")
+    @OneToOne(mappedBy = "reservation", cascade = CascadeType.ALL)
     private Cancellation cancellation;
 }
