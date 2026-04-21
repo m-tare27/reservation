@@ -12,19 +12,21 @@ public class Cancellation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
-    @OneToOne(mappedBy = "reservationId")
-    Reservation reservation;
-
-    @OneToOne(mappedBy = "cancellationPolicyId")
-    CancellationPolicy cancellationPolicy;
-
     LocalDateTime cancelledAt;
 
-    int daysBeforeCheckIn;
+    long daysBeforeCheckIn;
 
     double refundAmount;
 
+    @Enumerated(EnumType.STRING)
     RefundStatus refundStatus;
 
-    String Reason;
+    String reason;
+
+    @OneToOne(mappedBy = "cancellation")
+    private Reservation reservation;
+
+    @ManyToOne
+    @JoinColumn(name = "cancellation_policy_id")
+    private CancellationPolicy cancellationPolicy;
 }

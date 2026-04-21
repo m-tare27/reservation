@@ -3,6 +3,7 @@ package com.reservation.controller;
 import com.reservation.dto.*;
 import com.reservation.entity.ReservationStatus;
 import com.reservation.service.CancellationPolicyService;
+import com.reservation.service.CancellationService;
 import com.reservation.service.ReservationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,10 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 public class TestController {
-    @GetMapping("/test")
-    public String testMethod(){
-        return "Test Get";
-    }
+    private final CancellationService service;
 
 //    private final ReservationService reservationService;
 //
@@ -66,5 +64,4 @@ public class TestController {
 //        cancellationPolicyService.deleteCancellationPolicy(id);
 //        return ResponseEntity.noContent().build();
 //    }
-
 }

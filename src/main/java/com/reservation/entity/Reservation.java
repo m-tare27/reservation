@@ -30,4 +30,8 @@ public class Reservation {
     ReservationStatus reservationStatus;
 
     LocalDateTime createdAt;
+
+    @OneToOne
+    @JoinColumn(name = "reservation_id")
+    private Cancellation cancellation;
 }
