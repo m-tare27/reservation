@@ -84,6 +84,13 @@ public class ReservationService {
                 .toList();
     }
 
+    public List<ReservationResponse> getReservationByDateRange(LocalDate startDate , LocalDate endDate){
+        return reservationRepository.findByArrivalDateLessThanEqualAndDepartureDateGreaterThanEqual(endDate , startDate)
+                .stream()
+                .map(ReservationResponse::new)
+                .toList();
+    }
+
     public boolean isInvalidReservationDate(LocalDate arrivalDate, LocalDate departureDate) {
         return arrivalDate.isBefore(LocalDate.now()) ||
                 !departureDate.isAfter(arrivalDate);

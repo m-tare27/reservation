@@ -1,5 +1,6 @@
 package com.reservation.controller;
 
+import com.reservation.dto.DateRangeRequest;
 import com.reservation.dto.ReservationRequest;
 import com.reservation.dto.ReservationResponse;
 import com.reservation.dto.UpdateReservationStatusRequest;
@@ -53,6 +54,11 @@ public class ReservationController {
     @GetMapping("/status")
     public ResponseEntity<List<ReservationResponse>> getByStatus(@RequestParam ReservationStatus status){
         return ResponseEntity.ok(reservationService.getReservationByStatus(status));
+    }
+
+    @GetMapping("/date-range")
+    public ResponseEntity<List<ReservationResponse>> getByDateRange(@RequestBody DateRangeRequest request){
+        return ResponseEntity.ok(reservationService.getReservationByDateRange(request.getStartDate() , request.getEndDate()));
     }
 
 }
