@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -68,8 +69,13 @@ public class ReservationController {
     }
 
     @GetMapping("/date-range")
-    public ResponseEntity<List<ReservationResponse>> getByDateRange(@RequestBody DateRangeRequest request){
-        return ResponseEntity.ok(reservationService.getReservationByDateRange(request.getStartDate() , request.getEndDate()));
+    public ResponseEntity<List<ReservationResponse>> getByDateRange(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate) {
+
+        return ResponseEntity.ok(
+                reservationService.getReservationByDateRange(startDate, endDate)
+        );
     }
 
 }

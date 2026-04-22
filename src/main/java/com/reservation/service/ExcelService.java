@@ -4,7 +4,6 @@ import com.reservation.entity.Reservation;
 import com.reservation.entity.ReservationStatus;
 import com.reservation.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -30,7 +29,7 @@ public class ExcelService {
 
         List<Reservation> data = reservationRepository.findAll();
 
-        Workbook workbook = new HSSFWorkbook();
+        Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Data");
 
         Row header = sheet.createRow(0);
@@ -69,7 +68,7 @@ public class ExcelService {
 
     public void saveExcelData(MultipartFile file) throws Exception {
 
-        Workbook workbook = new HSSFWorkbook(file.getInputStream());
+        Workbook workbook = new XSSFWorkbook(file.getInputStream());
         Sheet sheet = workbook.getSheetAt(0);
 
         List<Reservation> list = new ArrayList<>();
