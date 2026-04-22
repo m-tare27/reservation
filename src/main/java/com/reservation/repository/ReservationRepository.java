@@ -25,7 +25,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
     SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END
     FROM Reservation r
     WHERE (:excludeId IS NULL OR r.id != :excludeId) AND
-    (r.bungalow.id = :bungalowId
+    (r.bungalowId = :bungalowId
       AND :arrivalDate < r.departureDate
       AND :departureDate > r.arrivalDate
       AND r.reservationStatus IN ('PENDING', 'CONFIRMED'))

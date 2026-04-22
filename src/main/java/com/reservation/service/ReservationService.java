@@ -24,6 +24,7 @@ import java.util.List;
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
+    private final EmailService emailService;
 
     public ReservationResponse createReservation(ReservationRequest request){
         Reservation reservation = new Reservation();
@@ -78,6 +79,13 @@ public class ReservationService {
 
         reservation.setReservationStatus(status);
         reservationRepository.save(reservation);
+
+        if (status == ReservationStatus.CONFIRMED){
+            emailService.sendReservationEmail(
+                    reservation.getGuestEmail(),
+                    reservation
+            );
+        }
     }
 
     public List<ReservationResponse> getReservation() {
