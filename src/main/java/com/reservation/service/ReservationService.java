@@ -9,7 +9,9 @@ import com.reservation.repository.ReservationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,6 +31,13 @@ public class ReservationService {
         if (isInvalidReservationDate(request.getArrivalDate() , request.getDepartureDate()))
             throw new RuntimeException("Invalid date input");
 
+        boolean exists = reservationRepository.existsOverlappingReservation(null , request.getBungalowId() , request.getArrivalDate() , request.getDepartureDate());
+        if(exists)
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Bungalow is booked for those dates"
+            );
+
         Mapper.mapRequestToEntity(reservation , request);
         reservation.setReservationStatus(ReservationStatus.PENDING);
         reservation.setCreatedAt(LocalDateTime.now());
@@ -44,6 +53,13 @@ public class ReservationService {
 
         if (isInvalidReservationDate(request.getArrivalDate() , request.getDepartureDate()))
             throw new RuntimeException("Invalid date input");
+
+        boolean exists = reservationRepository.existsOverlappingReservation(id , request.getBungalowId() , request.getArrivalDate() , request.getDepartureDate());
+        if(exists)
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Bungalow is booked for those dates"
+            );
 
         Mapper.mapRequestToEntity(reservation , request);
 
