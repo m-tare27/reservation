@@ -22,29 +22,6 @@ import java.io.IOException;
 @RestController
 @RequiredArgsConstructor
 public class TestController {
-    private final ExcelService service;
-
-    @GetMapping("/download")
-    public ResponseEntity<InputStreamResource> downloadExcel() throws IOException {
-        ByteArrayInputStream file = service.exportToExcel();
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION , "attachment; filename=data.xlsx")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(new InputStreamResource(file));
-    }
-
-    @PostMapping("/upload")
-    public ResponseEntity<String> uploadExcel(@RequestParam("file") MultipartFile file) {
-        try {
-            service.saveExcelData(file);
-            return ResponseEntity.ok("File uploaded successfully");
-        } catch (Exception e) {
-            e.printStackTrace(); // VERY IMPORTANT
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(e.getMessage());
-        }
-    }
 
 //    private final ReservationService reservationService;
 //
