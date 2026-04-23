@@ -19,7 +19,7 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 public class CancellationBatchConfig {
 
     @Bean
-    public JpaPagingItemReader<Cancellation> reader(EntityManagerFactory emf){
+    public JpaPagingItemReader<Cancellation> cancellationReader(EntityManagerFactory emf){
         JpaPagingItemReader<Cancellation> reader = new JpaPagingItemReader<>(emf);
         reader.setQueryString(
                 "SELECT c FROM Cancellation c WHERE c.refundStatus = 'PENDING'"
@@ -29,37 +29,41 @@ public class CancellationBatchConfig {
     }
 
     @Bean
-    public ItemProcessor<Cancellation,Cancellation> processor(){
+    public ItemProcessor<Cancellation, Cancellation> cancellationProcessor(){
         return new CancellationItemProcessor();
     }
 
     @Bean
-    public JpaItemWriter<Cancellation> writer(EntityManagerFactory emf){
+    public JpaItemWriter<Cancellation> cancellationWriter(EntityManagerFactory emf){
         return new JpaItemWriter<>(emf);
     }
 
     @Bean
-    public JpaTransactionManager transactionManager(EntityManagerFactory emf) {
+    public JpaTransactionManager cancellationTransactionManager(EntityManagerFactory emf) {
         return new JpaTransactionManager(emf);
     }
 
     @Bean
-    public Job refundReconciliation(JobRepository jobRepository , Step step1){
-        return new JobBuilder(jobRepository)
-                .start(step1)
+    public Job cancellationRefundReconciliationJob(JobRepository jobRepository,
+                                                   Step cancellationStep){
+        return new JobBuilder("cancellationRefundReconciliationJob", jobRepository)
+                .start(cancellationStep)
                 .build();
     }
 
-
     @Bean
-    public Step step1(JobRepository jobRepository, JpaTransactionManager transactionManager,
-                      JpaPagingItemReader<Cancellation> reader, CancellationItemProcessor processor, JpaItemWriter<Cancellation> writer) {
-        return new StepBuilder(jobRepository)
+    public Step cancellationStep(JobRepository jobRepository,
+                                 JpaTransactionManager cancellationTransactionManager,
+                                 JpaPagingItemReader<Cancellation> cancellationReader,
+                                 CancellationItemProcessor cancellationProcessor,
+                                 JpaItemWriter<Cancellation> cancellationWriter) {
+
+        return new StepBuilder("cancellationStep", jobRepository)
                 .<Cancellation, Cancellation>chunk(3)
-                .transactionManager(transactionManager)
-                .reader(reader)
-                .processor(processor)
-                .writer(writer)
+                .transactionManager(cancellationTransactionManager)
+                .reader(cancellationReader)
+                .processor(cancellationProcessor)
+                .writer(cancellationWriter)
                 .build();
     }
 }

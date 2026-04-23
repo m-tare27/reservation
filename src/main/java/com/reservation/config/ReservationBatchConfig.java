@@ -1,6 +1,5 @@
 package com.reservation.config;
 
-
 import com.reservation.entity.Reservation;
 import com.reservation.processor.ReservationItemProcessor;
 import jakarta.persistence.EntityManagerFactory;
@@ -17,10 +16,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.orm.jpa.JpaTransactionManager;
 
 @Configuration
-public class BatchConfig {
+public class ReservationBatchConfig {
 
     @Bean
-    public JpaPagingItemReader<Reservation> reader(EntityManagerFactory emf) {
+    public JpaPagingItemReader<Reservation> reservationReader(EntityManagerFactory emf) {
         JpaPagingItemReader<Reservation> reader = new JpaPagingItemReader<>(emf);
         reader.setQueryString(
                 "SELECT r FROM Reservation r WHERE r.reservationStatus = 'PENDING'"
@@ -30,36 +29,41 @@ public class BatchConfig {
     }
 
     @Bean
-    public ItemProcessor<Reservation, Reservation> processor() {
+    public ItemProcessor<Reservation, Reservation> reservationProcessor() {
         return new ReservationItemProcessor();
     }
 
     @Bean
-    public JpaItemWriter<Reservation> writer(EntityManagerFactory emf) {
+    public JpaItemWriter<Reservation> reservationWriter(EntityManagerFactory emf) {
         return new JpaItemWriter<>(emf);
     }
 
     @Bean
-    public JpaTransactionManager transactionManager(EntityManagerFactory emf) {
+    public JpaTransactionManager reservationTransactionManager(EntityManagerFactory emf) {
         return new JpaTransactionManager(emf);
     }
 
     @Bean
-    public Job importUserJob(JobRepository jobRepository, Step step1) {
-        return new JobBuilder(jobRepository)
-                .start(step1)
+    public Job reservationExpiryJob(JobRepository jobRepository,
+                                    Step reservationStep) {
+        return new JobBuilder("reservationExpiryJob", jobRepository)
+                .start(reservationStep)
                 .build();
     }
 
     @Bean
-    public Step step1(JobRepository jobRepository, JpaTransactionManager transactionManager,
-                      JpaPagingItemReader<Reservation> reader, ReservationItemProcessor processor, JpaItemWriter<Reservation> writer) {
-        return new StepBuilder(jobRepository)
+    public Step reservationStep(JobRepository jobRepository,
+                                JpaTransactionManager reservationTransactionManager,
+                                JpaPagingItemReader<Reservation> reservationReader,
+                                ReservationItemProcessor reservationProcessor,
+                                JpaItemWriter<Reservation> reservationWriter) {
+
+        return new StepBuilder("reservationStep", jobRepository)
                 .<Reservation, Reservation>chunk(3)
-                .transactionManager(transactionManager)
-                .reader(reader)
-                .processor(processor)
-                .writer(writer)
+                .transactionManager(reservationTransactionManager)
+                .reader(reservationReader)
+                .processor(reservationProcessor)
+                .writer(reservationWriter)
                 .build();
     }
 }
