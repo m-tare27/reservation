@@ -43,4 +43,13 @@ public class JobScheduler{
         jobOperator.start(job1, parameters);
     }
 
+    @Scheduled(cron = "*/10 * * * * ?")
+    public void scheduleReservationExpiryJob() throws JobInstanceAlreadyCompleteException, InvalidJobParametersException, JobExecutionAlreadyRunningException, JobRestartException {
+        JobParameters parameters = new JobParametersBuilder()
+                .addLong("time",System.currentTimeMillis())
+                .toJobParameters();
+
+        jobOperator.start(job2, parameters);
+    }
+
 }
