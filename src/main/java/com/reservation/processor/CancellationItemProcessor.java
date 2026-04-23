@@ -13,7 +13,7 @@ public class CancellationItemProcessor implements ItemProcessor<Cancellation , C
     private static final Logger log = LoggerFactory.getLogger(CancellationItemProcessor.class);
     @Override
     public @Nullable Cancellation process(Cancellation item) throws Exception {
-//        if (item.getCancelledAt().isBefore(LocalDateTime.now().minusHours(48)))
+        if (item.getCancelledAt().isBefore(LocalDateTime.now().minusHours(48)))
             item.setRefundStatus(RefundStatus.OVERDUE);
 
         return item;

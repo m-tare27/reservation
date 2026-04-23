@@ -24,7 +24,7 @@ public class CancellationPolicyController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PostMapping("/update/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<CancellationPolicyResponse> updatePolicy(
             @Valid @RequestBody CancellationPolicyRequest request,
             @PathVariable Integer id){

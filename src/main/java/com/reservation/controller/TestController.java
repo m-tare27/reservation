@@ -1,10 +1,21 @@
 package com.reservation.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.job.parameters.InvalidJobParametersException;
+import org.springframework.batch.core.job.parameters.JobParameters;
+import org.springframework.batch.core.launch.JobExecutionAlreadyRunningException;
+import org.springframework.batch.core.launch.JobInstanceAlreadyCompleteException;
+import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.launch.JobRestartException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/test")
 public class TestController {
 
 //    private final ReservationService reservationService;
