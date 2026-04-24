@@ -35,3 +35,7 @@ build/
 src/main/resources/application.properties
 logs/reservation-batch.log
 src/main/java/com/reservation/controller/TestController.java
+/logs/reservation-batch.log.2026-04-23.0.gz
+/.gradle/buildOutputCleanup/buildOutputCleanup.lock
+/.gradle/vcs-1/gc.properties
+/.gradle/8.14/gc.properties

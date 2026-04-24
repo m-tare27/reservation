@@ -82,8 +82,8 @@ public class ReservationService {
 
         if (status == ReservationStatus.CONFIRMED){
             emailService.sendReservationEmail(
-                    reservation.getGuestEmail(),
-                    reservation
+                    //reservation.getGuestEmail(),
+                    null ,reservation
             );
         }
     }

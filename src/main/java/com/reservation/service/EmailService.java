@@ -92,8 +92,8 @@ public class EmailService {
 
         // Helper method style (manual)
         addRow(table, "Reservation ID", String.valueOf(reservation.getId()), labelFont, valueFont);
-        addRow(table, "Guest Name", reservation.getGuestName(), labelFont, valueFont);
-        addRow(table, "Email", reservation.getGuestEmail(), labelFont, valueFont);
+        //addRow(table, "Guest Name", reservation.getGuestName(), labelFont, valueFont);
+        //addRow(table, "Email", reservation.getGuestEmail(), labelFont, valueFont);
         addRow(table, "Bungalow ID", String.valueOf(reservation.getBungalowId()), labelFont, valueFont);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy");

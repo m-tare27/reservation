@@ -31,8 +31,8 @@ public class ReservationResponse {
     public ReservationResponse(Reservation reservation) {
         this.id = reservation.getId();
         this.bungalowId = reservation.getBungalowId();
-        this.guestName = reservation.getGuestName();
-        this.guestEmail = reservation.getGuestEmail();
+        //this.guestName = reservation.getGuestName();
+        //this.guestEmail = reservation.getGuestEmail();
         this.arrivalDate = reservation.getArrivalDate();
         this.departureDate = reservation.getDepartureDate();
         this.totalAmount = reservation.getTotalAmount();

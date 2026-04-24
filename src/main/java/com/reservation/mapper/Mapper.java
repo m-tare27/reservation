@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
 public class Mapper {
     static public void mapRequestToEntity(Reservation reservation, ReservationRequest request) {
         reservation.setBungalowId(request.getBungalowId());
-        reservation.setGuestName(request.getGuestName());
-        reservation.setGuestEmail(request.getGuestEmail());
+        //reservation.setGuestName(request.getGuestName());
+        //reservation.setGuestEmail(request.getGuestEmail());
         reservation.setArrivalDate(request.getArrivalDate());
         reservation.setDepartureDate(request.getDepartureDate());
         reservation.setTotalAmount(request.getTotalAmount());
