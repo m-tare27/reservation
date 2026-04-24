@@ -11,9 +11,6 @@ public class ReservationRequest {
     @NotNull
     private Integer bungalowId;
 
-    @NotBlank
-    private String guestName;
-
     @Email
     @NotBlank
     private String guestEmail;
@@ -26,4 +23,6 @@ public class ReservationRequest {
 
     @Positive
     private double totalAmount;
+
+
 }

@@ -2,9 +2,11 @@ package com.reservation.service;
 
 import com.reservation.dto.ReservationRequest;
 import com.reservation.dto.ReservationResponse;
+import com.reservation.entity.Guest;
 import com.reservation.entity.Reservation;
 import com.reservation.entity.ReservationStatus;
 import com.reservation.mapper.Mapper;
+import com.reservation.repository.GuestRepository;
 import com.reservation.repository.ReservationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +26,13 @@ import java.util.List;
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
+    private final GuestRepository guestRepository;
     private final EmailService emailService;
 
     public ReservationResponse createReservation(ReservationRequest request){
+        Guest guest = guestRepository.findByEmail(request.getGuestEmail())
+                .orElseThrow(()-> new RuntimeException("Invalid Guest Email"));
+
         Reservation reservation = new Reservation();
 
         if (isInvalidReservationDate(request.getArrivalDate() , request.getDepartureDate()))
@@ -39,7 +45,7 @@ public class ReservationService {
                     "Bungalow is booked for those dates"
             );
 
-        Mapper.mapRequestToEntity(reservation , request);
+        Mapper.mapRequestToEntity(reservation , request , guest);
         reservation.setReservationStatus(ReservationStatus.PENDING);
         reservation.setCreatedAt(LocalDateTime.now());
 
@@ -52,6 +58,8 @@ public class ReservationService {
         Reservation reservation = reservationRepository.findById(id)
                         .orElseThrow(()-> new RuntimeException("Invalid Reservation Id"));
 
+        Guest guest = reservation.getGuest();
+
         if (isInvalidReservationDate(request.getArrivalDate() , request.getDepartureDate()))
             throw new RuntimeException("Invalid date input");
 
@@ -62,7 +70,7 @@ public class ReservationService {
                     "Bungalow is booked for those dates"
             );
 
-        Mapper.mapRequestToEntity(reservation , request);
+        Mapper.mapRequestToEntity(reservation , request , guest);
 
         Reservation savedReservation = reservationRepository.save(reservation);
 
