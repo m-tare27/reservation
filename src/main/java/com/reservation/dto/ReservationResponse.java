@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Data
 public class ReservationResponse {
 
-    private Integer id;
+    private Integer reservationId;
 
     private Integer bungalowId;
 
@@ -28,7 +28,7 @@ public class ReservationResponse {
     private LocalDateTime createdAt;
 
     public ReservationResponse(Reservation reservation) {
-        this.id = reservation.getId();
+        this.reservationId = reservation.getId();
         this.bungalowId = reservation.getBungalowId();
         this.guest = new GuestReservationResponse(reservation.getGuest());
         this.arrivalDate = reservation.getArrivalDate();

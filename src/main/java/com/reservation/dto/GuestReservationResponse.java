@@ -5,12 +5,12 @@ import lombok.Data;
 
 @Data
 public class GuestReservationResponse {
-    private Integer id;
+    private Integer guestId;
     private String name;
     private String email;
 
     public GuestReservationResponse(Guest guest) {
-        this.id = guest.getId();
+        this.guestId = guest.getId();
         this.name = guest.getName();
         this.email = guest.getEmail();
     }

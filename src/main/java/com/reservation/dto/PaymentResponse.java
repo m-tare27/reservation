@@ -6,12 +6,12 @@ import lombok.Data;
 @Data
 public class PaymentResponse {
     private Integer paymentId;
-    private Integer reservationId;
+    private ReservationResponse reservation;
     private Double amount;
 
     public PaymentResponse(Payment payment) {
         this.paymentId = payment.getId();
-        this.reservationId = payment.getReservation().getId();
+        this.reservation = new ReservationResponse(payment.getReservation());
         this.amount = payment.getAmount();
     }
 }
