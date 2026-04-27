@@ -46,6 +46,7 @@ public class ReservationService {
 
         boolean exists = reservationRepository.existsOverlappingReservation(null , request.getBungalowId() , request.getArrivalDate() , request.getDepartureDate());
         reservation.setReservationStatus(exists ? ReservationStatus.WAITLIST : ReservationStatus.PENDING);
+
         Reservation savedReservation = reservationRepository.save(reservation);
 
         return new ReservationResponse(savedReservation);
@@ -91,18 +92,26 @@ public class ReservationService {
         }
 
         if (currentStatus == ReservationStatus.WAITLIST && status == ReservationStatus.CONFIRMED) {
-            boolean hasConfirmedReservation = reservationRepository.existsConfirmedReservationForSameBungalow(id);
+            boolean hasConfirmedReservation = reservationRepository.existsConfirmedReservationForSameBungalow(
+                    id,
+                    reservation.getArrivalDate(),
+                    reservation.getDepartureDate());
+
             if (hasConfirmedReservation) {
                 throw new ResponseStatusException(
                         HttpStatus.CONFLICT,
-                        "Cannot confirm: another confirmed reservation exists for this bungalow");
+                        "Cannot confirm: another confirmed reservation exists for this bungalow during these dates");
             }
         }
 
         reservation.setReservationStatus(status);
         reservationRepository.save(reservation);
 
+        Guest guest = reservation.getGuest();
         if (status == ReservationStatus.CONFIRMED){
+            int loyaltyPoints = (int) reservation.getTotalAmount() / 10;
+            guest.setLoyaltyPoints(guest.getLoyaltyPoints() + loyaltyPoints);
+
             emailService.sendReservationEmail(
                     reservation.getGuest().getEmail() ,reservation
             );

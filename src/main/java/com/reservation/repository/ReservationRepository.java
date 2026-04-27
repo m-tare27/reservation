@@ -43,6 +43,12 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
             "WHERE r.bungalowId = (" +
             "    SELECT res.bungalowId FROM Reservation res WHERE res.id = :reservationId" +
             ") AND r.reservationStatus = 'CONFIRMED'" +
+            "AND r.id != :reservationId " +
+            "AND r.arrivalDate < :departureDate " +
+            "AND r.departureDate > :arrivalDate" +
             ") THEN true ELSE false END")
-    boolean existsConfirmedReservationForSameBungalow(@Param("reservationId") Integer reservationId);
+    boolean existsConfirmedReservationForSameBungalow(
+            @Param("reservationId") Integer reservationId,
+            @Param("arrivalDate") LocalDate arrivalDate,
+            @Param("departureDate") LocalDate departureDate);
 }
