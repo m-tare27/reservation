@@ -11,11 +11,11 @@ public class CancellationPolicyRequest {
 
     @NotNull(message = "Days before check-in from is required")
     @Min(value = 0, message = "Must be non-negative")
-    private Long daysBeforeCheckInFrom;
+    private int daysBeforeCheckInFrom;
 
     @NotNull(message = "Days before check-in to is required")
     @Min(value = 1, message = "Must be positive")
-    private Long daysBeforeCheckInTo;
+    private int daysBeforeCheckInTo;
 
     @NotNull(message = "Refund percentage is required")
     @DecimalMin(value = "0.0", message = "Must be at least 0")
