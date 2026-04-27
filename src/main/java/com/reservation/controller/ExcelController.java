@@ -14,31 +14,49 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/excel")
+@RequestMapping("/api/excel")
 @RequiredArgsConstructor
 public class ExcelController {
 
     private final ExcelService excelService;
 
-    @GetMapping("/download")
-    public ResponseEntity<InputStreamResource> downloadExcel() throws IOException {
-        ByteArrayInputStream file = excelService.exportToExcel();
+    @GetMapping("/export")
+    public ResponseEntity<InputStreamResource> exportReservations() {
+        try {
+            ByteArrayInputStream fileStream = excelService.exportToExcel();
+            long fileSize = fileStream.available();
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION , "attachment; filename=data.xlsx")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(new InputStreamResource(file));
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=reservations.xlsx")
+                    .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(fileSize))
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(new InputStreamResource(fileStream));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
+        }
     }
 
-    @PostMapping("/upload")
-    public ResponseEntity<String> uploadExcel(@RequestParam("file") MultipartFile file) {
+    @PostMapping("/import")
+    public ResponseEntity<String> importReservations(@RequestParam("file") MultipartFile file) {
         try {
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body("File is required and cannot be empty");
+            }
+
             excelService.saveExcelData(file);
-            return ResponseEntity.ok("File uploaded successfully");
+
+            return ResponseEntity.ok("Reservations imported successfully from file: " + file.getOriginalFilename());
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body("Invalid file: " + e.getMessage());
+
         } catch (Exception e) {
-            e.printStackTrace(); // VERY IMPORTANT
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(e.getMessage());
+                    .body("An unexpected error occurred. Please contact support.");
         }
     }
 }
