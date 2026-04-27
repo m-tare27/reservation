@@ -40,9 +40,9 @@ public class ReservationController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<Void> updateReservationStatus(
             @PathVariable Integer id,
-            @RequestBody UpdateReservationStatusRequest request) {
+            @RequestParam ReservationStatus status) {
 
-        reservationService.updateReservationStatus(id, request.getStatus());
+        reservationService.updateReservationStatus(id, status);
         return ResponseEntity.noContent().build();
     }
 

@@ -35,7 +35,7 @@ build/
 src/main/resources/application.properties
 logs/reservation-batch.log
 src/main/java/com/reservation/controller/TestController.java
-/logs/reservation-batch.log.2026-04-23.0.gz
+
 
 # Gradle (simplify - ignore entire .gradle/ instead of specific files)
 .gradle/
@@ -44,4 +44,4 @@ gradle-app.setting
 /gradle/wrapper/gradle-wrapper.properties
 /gradlew
 /gradlew.bat
-/logs/reservation-batch.log.2026-04-24.0.gz
+
