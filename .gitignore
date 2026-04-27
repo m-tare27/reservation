@@ -44,3 +44,4 @@ gradle-app.setting
 /gradle/wrapper/gradle-wrapper.properties
 /gradlew
 /gradlew.bat
+/logs/reservation-batch.log.2026-04-24.0.gz

@@ -1,12 +1,10 @@
 package com.reservation.controller;
 
-import com.reservation.dto.DateRangeRequest;
 import com.reservation.dto.ReservationRequest;
 import com.reservation.dto.ReservationResponse;
 import com.reservation.dto.UpdateReservationStatusRequest;
 import com.reservation.entity.ReservationStatus;
 import com.reservation.service.ReservationService;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,13 +15,13 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/reservation")
+@RequestMapping("api/reservations")
 @RequiredArgsConstructor
 public class ReservationController {
 
     private final ReservationService reservationService;
 
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<ReservationResponse> createReservation(
             @Valid @RequestBody ReservationRequest request) {
 
@@ -31,7 +29,7 @@ public class ReservationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PutMapping("/update/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ReservationResponse> updateReservation(
             @Valid @RequestBody ReservationRequest request , @PathVariable Integer id) {
 
@@ -49,33 +47,15 @@ public class ReservationController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ReservationResponse>> getAllReservations(){
-        return ResponseEntity.ok(reservationService.getReservation());
-    }
+    public ResponseEntity<List<ReservationResponse>> getReservations(
+            @RequestParam(required = false) Integer id,
+            @RequestParam(required = false) Integer bungalowId,
+            @RequestParam(required = false) ReservationStatus status,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate) {
 
-    @GetMapping("/bungalow/{id}")
-    public ResponseEntity<List<ReservationResponse>> getByBungalowId(@PathVariable Integer id){
-        return ResponseEntity.ok(reservationService.getReservationByBungalowId(id));
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ReservationResponse> getById(@PathVariable Integer id){
-        return ResponseEntity.ok(reservationService.getReservationById(id));
-    }
-
-    @GetMapping("/status")
-    public ResponseEntity<List<ReservationResponse>> getByStatus(@RequestParam ReservationStatus status){
-        return ResponseEntity.ok(reservationService.getReservationByStatus(status));
-    }
-
-    @GetMapping("/date-range")
-    public ResponseEntity<List<ReservationResponse>> getByDateRange(
-            @RequestParam LocalDate startDate,
-            @RequestParam LocalDate endDate) {
-
-        return ResponseEntity.ok(
-                reservationService.getReservationByDateRange(startDate, endDate)
-        );
+        List<ReservationResponse> response = reservationService.getReservations(id, bungalowId, status, startDate, endDate);
+        return ResponseEntity.ok(response);
     }
 
 }

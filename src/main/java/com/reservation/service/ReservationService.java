@@ -10,7 +10,6 @@ import com.reservation.repository.GuestRepository;
 import com.reservation.repository.ReservationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -31,24 +30,22 @@ public class ReservationService {
 
     public ReservationResponse createReservation(ReservationRequest request){
         Guest guest = guestRepository.findByEmail(request.getGuestEmail())
-                .orElseThrow(()-> new RuntimeException("Invalid Guest Email"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Guest with email " + request.getGuestEmail() + " not found"));
+
+        if (isInvalidReservationDate(request.getArrivalDate(), request.getDepartureDate())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Arrival date must be today or later, and departure must be after arrival");
+        }
 
         Reservation reservation = new Reservation();
-
-        if (isInvalidReservationDate(request.getArrivalDate() , request.getDepartureDate()))
-            throw new RuntimeException("Invalid date input");
-
         Mapper.mapRequestToEntity(reservation , request , guest);
         reservation.setCreatedAt(LocalDateTime.now());
 
         boolean exists = reservationRepository.existsOverlappingReservation(null , request.getBungalowId() , request.getArrivalDate() , request.getDepartureDate());
-        if(exists){
-            reservation.setReservationStatus(ReservationStatus.WAITLIST);
-        }
-        else {
-            reservation.setReservationStatus(ReservationStatus.PENDING);
-        }
-
+        reservation.setReservationStatus(exists ? ReservationStatus.WAITLIST : ReservationStatus.PENDING);
         Reservation savedReservation = reservationRepository.save(reservation);
 
         return new ReservationResponse(savedReservation);
@@ -56,12 +53,15 @@ public class ReservationService {
 
     public ReservationResponse updateReservation(ReservationRequest request , Integer id){
         Reservation reservation = reservationRepository.findById(id)
-                        .orElseThrow(()-> new RuntimeException("Invalid Reservation Id"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Reservation with id " + id + " not found"));
 
-        Guest guest = reservation.getGuest();
-
-        if (isInvalidReservationDate(request.getArrivalDate() , request.getDepartureDate()))
-            throw new RuntimeException("Invalid date input");
+        if (isInvalidReservationDate(request.getArrivalDate(), request.getDepartureDate())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid date range provided");
+        }
 
         boolean exists = reservationRepository.existsOverlappingReservation(id , request.getBungalowId() , request.getArrivalDate() , request.getDepartureDate());
         if(exists)
@@ -70,8 +70,7 @@ public class ReservationService {
                     "Bungalow is booked for those dates"
             );
 
-        Mapper.mapRequestToEntity(reservation , request , guest);
-
+        Mapper.mapRequestToEntity(reservation , request , reservation.getGuest());
         Reservation savedReservation = reservationRepository.save(reservation);
 
         return new ReservationResponse(savedReservation);
@@ -79,16 +78,24 @@ public class ReservationService {
 
     public void updateReservationStatus(Integer id, ReservationStatus status){
         Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(()-> new RuntimeException("Invalid Reservation Id"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Reservation not found"));
 
-        if (reservation.getReservationStatus() != ReservationStatus.PENDING && reservation.getReservationStatus() != ReservationStatus.WAITLIST) {
-            throw new RuntimeException("Only pending or waitlist reservations can be updated");
+        ReservationStatus currentStatus = reservation.getReservationStatus();
+
+        if (currentStatus != ReservationStatus.PENDING && currentStatus != ReservationStatus.WAITLIST) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Only PENDING or WAITLIST reservations can be updated");
         }
 
-        if (reservation.getReservationStatus() == ReservationStatus.WAITLIST && status == ReservationStatus.CONFIRMED) {
-            boolean exists = reservationRepository.existsConfirmedReservationForSameBungalow(id);
-            if (exists) {
-                throw new RuntimeException("Cannot confirm waitlist reservation because there is already a confirmed reservation for the same bungalow");
+        if (currentStatus == ReservationStatus.WAITLIST && status == ReservationStatus.CONFIRMED) {
+            boolean hasConfirmedReservation = reservationRepository.existsConfirmedReservationForSameBungalow(id);
+            if (hasConfirmedReservation) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Cannot confirm: another confirmed reservation exists for this bungalow");
             }
         }
 
@@ -109,30 +116,49 @@ public class ReservationService {
                 .toList();
     }
 
-    public ReservationResponse getReservationById(Integer id){
+    public ReservationResponse getReservationById(Integer id) {
         Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(()-> new RuntimeException("Invalid Reservation Id"));
-
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Reservation with id " + id + " not found"));
         return new ReservationResponse(reservation);
     }
 
-    public List<ReservationResponse> getReservationByBungalowId(Integer id){
-        return reservationRepository.findByBungalowId(id)
-                .stream()
-                .map(ReservationResponse::new)
-                .toList();
-    }
+    public List<ReservationResponse> getReservations(
+            Integer id,
+            Integer bungalowId,
+            ReservationStatus status,
+            LocalDate startDate,
+            LocalDate endDate) {
 
-    public List<ReservationResponse> getReservationByStatus(ReservationStatus status){
-        return reservationRepository.findByReservationStatus(status)
-                .stream()
-                .map(ReservationResponse::new)
-                .toList();
-    }
+        if (id != null) {
+            return List.of(getReservationById(id));
+        }
 
-    public List<ReservationResponse> getReservationByDateRange(LocalDate startDate , LocalDate endDate){
-        return reservationRepository.findByArrivalDateLessThanEqualAndDepartureDateGreaterThanEqual(endDate , startDate)
-                .stream()
+        if (bungalowId != null) {
+            return convertToResponseList(reservationRepository.findByBungalowId(bungalowId));
+        }
+
+        if (status != null) {
+            return convertToResponseList(reservationRepository.findByReservationStatus(status));
+        }
+
+        if (startDate != null && endDate != null) {
+            if (startDate.isAfter(endDate)) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Start date must be before end date");
+            }
+            return convertToResponseList(
+                    reservationRepository.findByArrivalDateLessThanEqualAndDepartureDateGreaterThanEqual(
+                            endDate, startDate));
+        }
+        return convertToResponseList(reservationRepository.findAll());
+    }
+        //Helper methods
+
+    private List<ReservationResponse> convertToResponseList(List<Reservation> reservations) {
+        return reservations.stream()
                 .map(ReservationResponse::new)
                 .toList();
     }
@@ -141,5 +167,4 @@ public class ReservationService {
         return arrivalDate.isBefore(LocalDate.now()) ||
                 !departureDate.isAfter(arrivalDate);
     }
-
 }
