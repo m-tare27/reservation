@@ -4,6 +4,8 @@ import com.reservation.dto.GuestRequest;
 import com.reservation.dto.GuestResponse;
 import com.reservation.service.GuestService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,24 +15,32 @@ public class GuestController {
 
     private final GuestService guestService;
 
-    @PostMapping("/create")
-    public GuestResponse createGuest(GuestRequest request) {
-        return guestService.createGuest(request.getName(), request.getEmail());
+    @PostMapping
+    public ResponseEntity<GuestResponse> createGuest(@RequestBody GuestRequest request) {
+        GuestResponse response = guestService.createGuest(request.getName(), request.getEmail());
+        return ResponseEntity.status(
+                HttpStatus.CREATED
+        ).body(response);
     }
 
-    @PutMapping("update/{id}")
-    public GuestResponse updateGuest( @PathVariable Integer id, @RequestBody GuestRequest request) {
-        return guestService.updateGuest(id, request);
+    @PutMapping("/{id}")
+    public ResponseEntity<GuestResponse> updateGuest(
+            @PathVariable Integer id,
+            @RequestBody GuestRequest request) {
+        GuestResponse response = guestService.updateGuest(id, request);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    public GuestResponse getGuestById(@PathVariable Integer id) {
-        return guestService.getGuestById(id);
+    public ResponseEntity<GuestResponse> getGuestById(@PathVariable Integer id) {
+        GuestResponse response = guestService.getGuestById(id);
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/email")
-    public GuestResponse getGuestByEmail(@RequestParam String email) {
-        return guestService.getGuestByEmail(email);
+    @GetMapping("/by-email")
+    public ResponseEntity<GuestResponse> getGuestByEmail(@RequestParam String email) {
+        GuestResponse response = guestService.getGuestByEmail(email);
+        return ResponseEntity.ok(response);
     }
 
 }
