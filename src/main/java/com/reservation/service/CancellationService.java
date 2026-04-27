@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -29,51 +31,61 @@ public class CancellationService {
     public CancellationResponse cancelReservation(CancellationRequest request){
         Reservation reservation = reservationRepository.findById(request.getId())
                 .orElseThrow(()-> new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
+                        HttpStatus.NOT_FOUND,
                         "Invalid reservation id"
                 ));
 
         if (reservation.getReservationStatus() == ReservationStatus.CANCELLED) {
             Cancellation existing = cancellationRepository.findByReservation(reservation)
-                    .orElseThrow(()-> new ResponseStatusException(
-                            HttpStatus.BAD_REQUEST,
-                            "Cancellation record missing"
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.CONFLICT,
+                            "Reservation is already cancelled"
                     ));
             return new CancellationResponse(existing);
         }
 
+        if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED &&
+                reservation.getReservationStatus() != ReservationStatus.PENDING) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Only CONFIRMED or PENDING reservations can be cancelled"
+            );
+        }
 
-        long days = ChronoUnit.DAYS.between(LocalDate.now() , reservation.getArrivalDate());
+        long daysBeforeCheckIn = ChronoUnit.DAYS.between(LocalDate.now() , reservation.getArrivalDate());
 
-        if (days < 0) {
+        if (daysBeforeCheckIn < 0) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Cannot cancel after check-in date"
             );
         }
 
-        CancellationPolicy cancellationPolicy = cancellationPolicyRepository.findApplicablePolicy(days)
-                        .orElseThrow(() -> new ResponseStatusException(
-                                HttpStatus.BAD_REQUEST,
-                                "No policy applicable"
-                        ));
+        CancellationPolicy policy = cancellationPolicyRepository.findApplicablePolicy(daysBeforeCheckIn)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "No applicable cancellation policy found for " + daysBeforeCheckIn + " days before check-in"
+                ));
 
-        reservation.setReservationStatus(ReservationStatus.CANCELLED);
         Cancellation cancellation = new Cancellation();
-
         cancellation.setReservation(reservation);
-        cancellation.setCancellationPolicy(cancellationPolicy);
-        cancellation.setDaysBeforeCheckIn(days);
+        cancellation.setCancellationPolicy(policy);
+        cancellation.setDaysBeforeCheckIn(daysBeforeCheckIn);
         cancellation.setCancelledAt(LocalDateTime.now());
         cancellation.setRefundStatus(RefundStatus.PENDING);
-
-
-        double refund = reservation.getTotalAmount() * cancellationPolicy.getRefundPercentage()/100;
-        cancellation.setRefundAmount(refund);
         cancellation.setReason(request.getReason());
 
+        BigDecimal totalAmount = new BigDecimal(reservation.getTotalAmount());
+        BigDecimal refundPercentage = new BigDecimal(policy.getRefundPercentage());
+        BigDecimal refundAmount = totalAmount
+                .multiply(refundPercentage)
+                .divide(new BigDecimal(100), 2, RoundingMode.HALF_UP);
+
+        cancellation.setRefundAmount(refundAmount.doubleValue());
+        reservation.setReservationStatus(ReservationStatus.CANCELLED);
 
         Cancellation savedCancellation = cancellationRepository.save(cancellation);
+
         return new CancellationResponse(savedCancellation);
     }
 
@@ -81,36 +93,48 @@ public class CancellationService {
         Cancellation cancellation =  cancellationRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "No cancellations for this id"
+                        "Cancellation with id " + id + " not found"
                 ));
         return new CancellationResponse(cancellation);
     }
 
-    public List<CancellationResponse> getAllCancellation(){
-        return cancellationRepository.findAll()
-                .stream()
+    public List<CancellationResponse> getCancellations(
+            LocalDateTime cancelledAt,
+            Long daysBeforeCheckIn,
+            RefundStatus refundStatus) {
+
+        if (cancelledAt != null) {
+            return convertToResponseList(
+                    cancellationRepository.findByCancelledAt(cancelledAt));
+        }
+
+        if (daysBeforeCheckIn != null) {
+            return convertToResponseList(
+                    cancellationRepository.findByDaysBeforeCheckInEquals(daysBeforeCheckIn));
+        }
+
+        if (refundStatus != null) {
+            return convertToResponseList(
+                    cancellationRepository.findByRefundStatus(refundStatus));
+        }
+        return convertToResponseList(cancellationRepository.findAll());
+    }
+
+    //Helper Methods
+    private List<CancellationResponse> convertToResponseList(List<Cancellation> cancellations) {
+        return cancellations.stream()
                 .map(CancellationResponse::new)
                 .toList();
     }
 
-    public List<CancellationResponse> getAllCancellationByCancelledAt(LocalDateTime time){
-        return cancellationRepository.findByCancelledAt(time)
-                .stream()
-                .map(CancellationResponse::new)
-                .toList();
-    }
-
-    public List<CancellationResponse> getAllCancellationByDaysBeforeCheckIn(long days){
-        return cancellationRepository.findByDaysBeforeCheckInEquals(days)
-                .stream()
-                .map(CancellationResponse::new)
-                .toList();
-    }
-
-    public List<CancellationResponse> getAllCancellationByRefundStatus(RefundStatus status){
-        return cancellationRepository.findByRefundStatus(status)
-                .stream()
-                .map(CancellationResponse::new)
-                .toList();
+    public CancellationResponse updateRefundStatus(Integer id, RefundStatus refundStatus) {
+        Cancellation cancellation = cancellationRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Cancellation with id " + id + " not found"
+                ));
+        cancellation.setRefundStatus(refundStatus);
+        Cancellation updatedCancellation = cancellationRepository.save(cancellation);
+        return new CancellationResponse(updatedCancellation);
     }
 }

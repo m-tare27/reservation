@@ -4,7 +4,9 @@ import com.reservation.dto.CancellationRequest;
 import com.reservation.dto.CancellationResponse;
 import com.reservation.entity.RefundStatus;
 import com.reservation.service.CancellationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,39 +14,42 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/cancel")
+@RequestMapping("/api/cancellations")
 @RequiredArgsConstructor
 public class CancellationController {
     private final CancellationService cancellationService;
 
     @PostMapping
-    public CancellationResponse cancelReservation(@RequestBody CancellationRequest request){
-        return cancellationService.cancelReservation(request);
+    public ResponseEntity<CancellationResponse> cancelReservation(
+            @Valid @RequestBody CancellationRequest request) {
+
+        CancellationResponse response = cancellationService.cancelReservation(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
-    public ResponseEntity<List<CancellationResponse>> getAll(){
-        return ResponseEntity.ok(cancellationService.getAllCancellation());
+    public ResponseEntity<List<CancellationResponse>> getCancellations(
+            @RequestParam(required = false) LocalDateTime cancelledAt,
+            @RequestParam(required = false) Long daysBeforeCheckIn,
+            @RequestParam(required = false) RefundStatus refundStatus) {
+
+        List<CancellationResponse> response = cancellationService.getCancellations(
+                cancelledAt, daysBeforeCheckIn, refundStatus);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CancellationResponse> getById(@PathVariable Integer id){
-        return ResponseEntity.ok(cancellationService.getCancellationById(id));
+    public ResponseEntity<CancellationResponse> getCancellationById(@PathVariable Integer id) {
+        CancellationResponse response = cancellationService.getCancellationById(id);
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/refund-status")
-    public ResponseEntity<List<CancellationResponse>> getByRefundStatus(@RequestParam RefundStatus status){
-        return ResponseEntity.ok(cancellationService.getAllCancellationByRefundStatus(status));
-    }
+    @PatchMapping("/refund-status/{id}")
+    public ResponseEntity<CancellationResponse> updateRefundStatus(
+            @PathVariable Integer id,
+            @RequestParam RefundStatus refundStatus) {
 
-    @GetMapping("/cancelled-at")
-    public ResponseEntity<List<CancellationResponse>> getByCancelledAt(@RequestParam LocalDateTime time){
-        return ResponseEntity.ok(cancellationService.getAllCancellationByCancelledAt(time));
+        CancellationResponse response = cancellationService.updateRefundStatus(id, refundStatus);
+        return ResponseEntity.ok(response);
     }
-
-    @GetMapping("/days-before-check-in/{days}")
-    public ResponseEntity<List<CancellationResponse>> getByDaysBeforeCheckIn(@PathVariable long days){
-        return ResponseEntity.ok(cancellationService.getAllCancellationByDaysBeforeCheckIn(days));
-    }
-
 }
