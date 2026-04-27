@@ -12,40 +12,44 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/policy")
+@RequestMapping("/api/cancellation-policies")
 @RequiredArgsConstructor
 public class CancellationPolicyController {
     private final CancellationPolicyService cancellationPolicyService;
 
-    @PostMapping("/create")
-    public ResponseEntity<CancellationPolicyResponse> createPolicy(
-            @Valid @RequestBody CancellationPolicyRequest request){
+    @PostMapping
+    public ResponseEntity<CancellationPolicyResponse> createCancellationPolicy(
+            @Valid @RequestBody CancellationPolicyRequest request) {
+
         CancellationPolicyResponse response = cancellationPolicyService.createCancellationPolicy(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<CancellationPolicyResponse> updatePolicy(
-            @Valid @RequestBody CancellationPolicyRequest request,
-            @PathVariable Integer id){
-        CancellationPolicyResponse response = cancellationPolicyService.updateCancellationPolicy(id , request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    @PutMapping("/{id}")
+    public ResponseEntity<CancellationPolicyResponse> updateCancellationPolicy(
+            @PathVariable Integer id,
+            @Valid @RequestBody CancellationPolicyRequest request) {
+
+        CancellationPolicyResponse response = cancellationPolicyService.updateCancellationPolicy(id, request);
+        return ResponseEntity.ok(response);  // 200 OK, not CREATED
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCancellationPolicy(@PathVariable Integer id) {
         cancellationPolicyService.deleteCancellationPolicy(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping
-    public ResponseEntity<List<CancellationPolicyResponse>> getAllPolicies(){
-        return ResponseEntity.ok(cancellationPolicyService.getCancellationPolicies());
+    public ResponseEntity<List<CancellationPolicyResponse>> getCancellationPolicies() {
+        List<CancellationPolicyResponse> response = cancellationPolicyService.getCancellationPolicies();
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CancellationPolicyResponse> getById(@PathVariable Integer id){
-        return ResponseEntity.ok(cancellationPolicyService.getCancellationPolicyById(id));
+    public ResponseEntity<CancellationPolicyResponse> getCancellationPolicyById(@PathVariable Integer id) {
+        CancellationPolicyResponse response = cancellationPolicyService.getCancellationPolicyById(id);
+        return ResponseEntity.ok(response);
     }
 
 }

@@ -6,6 +6,7 @@ import com.reservation.entity.CancellationPolicy;
 import com.reservation.mapper.Mapper;
 import com.reservation.repository.CancellationPolicyRepository;
 import com.reservation.repository.CancellationRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -15,12 +16,13 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CancellationPolicyService {
     private final CancellationPolicyRepository cancellationPolicyRepository;
     private final CancellationRepository cancellationRepository;
 
     public CancellationPolicyResponse createCancellationPolicy(CancellationPolicyRequest policy){
-        CancellationPolicy cancellationPolicy = new CancellationPolicy();
+        validateCancellationPolicyRequest(policy);
 
         boolean exists = cancellationPolicyRepository.existsOverlappingRange(policy.getDaysBeforeCheckInFrom(), policy.getDaysBeforeCheckInTo(), null);
         if (exists)
@@ -28,7 +30,7 @@ public class CancellationPolicyService {
                     HttpStatus.BAD_REQUEST,
                     "Overlapping policy date range"
             );
-
+        CancellationPolicy cancellationPolicy = new CancellationPolicy();
         Mapper.mapRequestToEntity(cancellationPolicy , policy);
 
         CancellationPolicy savedPolicy = cancellationPolicyRepository.save(cancellationPolicy);
@@ -37,8 +39,12 @@ public class CancellationPolicyService {
     }
 
     public CancellationPolicyResponse updateCancellationPolicy(Integer id , CancellationPolicyRequest policy){
+        validateCancellationPolicyRequest(policy);
+
         CancellationPolicy cancellationPolicy = cancellationPolicyRepository.findById(id)
-                        .orElseThrow(()-> new RuntimeException("Invalid Policy"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Cancellation policy with id " + id + " not found"));
 
         boolean exists = cancellationPolicyRepository.existsOverlappingRange(policy.getDaysBeforeCheckInFrom(), policy.getDaysBeforeCheckInTo(), id);
         if (exists)
@@ -55,9 +61,9 @@ public class CancellationPolicyService {
     }
 
     public void deleteCancellationPolicy(Integer id){
-        boolean exists = cancellationRepository.existsByCancellationPolicy_Id(id);
+        boolean isInUse = cancellationRepository.existsByCancellationPolicy_Id(id);
 
-        if (exists)
+        if (isInUse)
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Policy is in use and cannot be deleted"
@@ -82,5 +88,25 @@ public class CancellationPolicyService {
         return new CancellationPolicyResponse(policy);
     }
 
+    //Helper Methods
 
+    private void validateCancellationPolicyRequest(CancellationPolicyRequest request) {
+        if (request == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Cancellation policy request is required");
+        }
+
+        if (request.getDaysBeforeCheckInFrom() >= request.getDaysBeforeCheckInTo()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "'Days before check-in from' must be less than 'to' value");
+        }
+
+        if (request.getDaysBeforeCheckInFrom() < 0 || request.getDaysBeforeCheckInTo() < 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Days before check-in cannot be negative");
+        }
+    }
 }
