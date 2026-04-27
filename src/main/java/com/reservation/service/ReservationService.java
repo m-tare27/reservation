@@ -38,16 +38,16 @@ public class ReservationService {
         if (isInvalidReservationDate(request.getArrivalDate() , request.getDepartureDate()))
             throw new RuntimeException("Invalid date input");
 
-        boolean exists = reservationRepository.existsOverlappingReservation(null , request.getBungalowId() , request.getArrivalDate() , request.getDepartureDate());
-        if(exists)
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Bungalow is booked for those dates"
-            );
-
         Mapper.mapRequestToEntity(reservation , request , guest);
-        reservation.setReservationStatus(ReservationStatus.PENDING);
         reservation.setCreatedAt(LocalDateTime.now());
+
+        boolean exists = reservationRepository.existsOverlappingReservation(null , request.getBungalowId() , request.getArrivalDate() , request.getDepartureDate());
+        if(exists){
+            reservation.setReservationStatus(ReservationStatus.WAITLIST);
+        }
+        else {
+            reservation.setReservationStatus(ReservationStatus.PENDING);
+        }
 
         Reservation savedReservation = reservationRepository.save(reservation);
 
@@ -81,8 +81,15 @@ public class ReservationService {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(()-> new RuntimeException("Invalid Reservation Id"));
 
-        if (reservation.getReservationStatus() != ReservationStatus.PENDING) {
-            throw new RuntimeException("Only pending reservations can be updated");
+        if (reservation.getReservationStatus() != ReservationStatus.PENDING && reservation.getReservationStatus() != ReservationStatus.WAITLIST) {
+            throw new RuntimeException("Only pending or waitlist reservations can be updated");
+        }
+
+        if (reservation.getReservationStatus() == ReservationStatus.WAITLIST && status == ReservationStatus.CONFIRMED) {
+            boolean exists = reservationRepository.existsConfirmedReservationForSameBungalow(id);
+            if (exists) {
+                throw new RuntimeException("Cannot confirm waitlist reservation because there is already a confirmed reservation for the same bungalow");
+            }
         }
 
         reservation.setReservationStatus(status);
@@ -90,8 +97,7 @@ public class ReservationService {
 
         if (status == ReservationStatus.CONFIRMED){
             emailService.sendReservationEmail(
-                    //reservation.getGuestEmail(),
-                    null ,reservation
+                    reservation.getGuest().getEmail() ,reservation
             );
         }
     }
