@@ -2,7 +2,6 @@ package com.reservation.controller;
 
 import com.reservation.dto.ReservationRequest;
 import com.reservation.dto.ReservationResponse;
-import com.reservation.dto.UpdateReservationStatusRequest;
 import com.reservation.entity.ReservationStatus;
 import com.reservation.service.ReservationService;
 import jakarta.validation.Valid;
