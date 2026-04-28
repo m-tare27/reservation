@@ -3,6 +3,7 @@ package com.reservation.controller;
 import com.reservation.dto.GuestRequest;
 import com.reservation.dto.GuestResponse;
 import com.reservation.service.GuestService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +17,7 @@ public class GuestController {
     private final GuestService guestService;
 
     @PostMapping
-    public ResponseEntity<GuestResponse> createGuest(@RequestBody GuestRequest request) {
+    public ResponseEntity<GuestResponse> createGuest(@Valid @RequestBody GuestRequest request) {
         GuestResponse response = guestService.createGuest(request.getName(), request.getEmail());
         return ResponseEntity.status(
                 HttpStatus.CREATED
@@ -26,7 +27,7 @@ public class GuestController {
     @PutMapping("/{id}")
     public ResponseEntity<GuestResponse> updateGuest(
             @PathVariable Integer id,
-            @RequestBody GuestRequest request) {
+            @Valid @RequestBody GuestRequest request) {
         GuestResponse response = guestService.updateGuest(id, request);
         return ResponseEntity.ok(response);
     }
