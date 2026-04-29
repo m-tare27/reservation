@@ -15,4 +15,8 @@ public class Commission {
 
     @OneToOne(mappedBy = "commission")
     private Reservation reservation;
+
+    @ManyToOne
+    @JoinColumn(name = "travel_agent_id")
+    private TravelAgent travelAgent;
 }
