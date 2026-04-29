@@ -26,6 +26,9 @@ public class Reservation {
     @Enumerated(EnumType.STRING)
     ReservationStatus reservationStatus;
 
+    @Enumerated(EnumType.STRING)
+    BookingSource bookingSource;
+
     LocalDateTime createdAt;
 
     @OneToOne(mappedBy = "reservation", cascade = CascadeType.ALL)
