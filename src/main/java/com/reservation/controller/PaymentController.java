@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
@@ -27,6 +29,12 @@ public class PaymentController {
     @GetMapping("/{paymentId}")
     public ResponseEntity<PaymentResponse> getPaymentById(@PathVariable Integer paymentId) {
         PaymentResponse response = paymentService.getPaymentById(paymentId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/reservation/{reservationId}")
+    public ResponseEntity<List<PaymentResponse>> getPaymentByReservationId(@PathVariable Integer reservationId) {
+        List<PaymentResponse> response = paymentService.getPaymentsByReservationId(reservationId);
         return ResponseEntity.ok(response);
     }
 

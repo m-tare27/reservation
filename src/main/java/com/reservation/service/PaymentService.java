@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -102,6 +104,14 @@ public class PaymentService {
 
         return new PaymentResponse(savedPayment);
     }
+
+    public List<PaymentResponse> getPaymentsByReservationId(Integer reservationId) {
+        List<Payment> payments = paymentRepository.findByReservationId(reservationId);
+        return payments.stream()
+                .map(PaymentResponse::new)
+                .toList();
+    }
+
     //Helper Methods
 
     private void validatePaymentRequest(PaymentRequest request) {
