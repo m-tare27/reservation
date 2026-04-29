@@ -37,4 +37,8 @@ public class Reservation {
 
     @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL)
     List<Payment> payments;
+
+    @OneToOne
+    @JoinColumn(name = "commission_id")
+    private Commission commission;
 }
