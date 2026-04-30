@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/guests")
 @RequiredArgsConstructor
@@ -18,7 +20,7 @@ public class GuestController {
 
     @PostMapping
     public ResponseEntity<GuestResponse> createGuest(@Valid @RequestBody GuestRequest request) {
-        GuestResponse response = guestService.createGuest(request.getName(), request.getEmail());
+        GuestResponse response = guestService.createGuest(request);
         return ResponseEntity.status(
                 HttpStatus.CREATED
         ).body(response);
@@ -42,6 +44,11 @@ public class GuestController {
     public ResponseEntity<GuestResponse> getGuestByEmail(@RequestParam String email) {
         GuestResponse response = guestService.getGuestByEmail(email);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<GuestResponse>> getAllGuests() {
+        return ResponseEntity.ok(guestService.getAllGuests());
     }
 
 }

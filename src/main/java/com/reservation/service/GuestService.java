@@ -6,9 +6,12 @@ import com.reservation.entity.Guest;
 import com.reservation.repository.GuestRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -17,17 +20,17 @@ public class GuestService {
 
     private final GuestRepository guestRepository;
 
-    public GuestResponse createGuest(String name, String email) {
+    public GuestResponse createGuest(GuestRequest request) {
 
-        if (guestRepository.findByEmail(email).isPresent()) {
+        if (guestRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Guest with email " + email + " already exists");
+                    "Guest with email " + request.getEmail() + " already exists");
         }
 
         Guest guest = new Guest();
-        guest.setName(name);
-        guest.setEmail(email);
+        guest.setName(request.getName());
+        guest.setEmail(request.getEmail());
         guest.setLoyaltyPoints(0);
 
         Guest savedGuest = guestRepository.save(guest);
@@ -38,7 +41,9 @@ public class GuestService {
     public GuestResponse updateGuest(Integer id, GuestRequest request) {
 
         Guest guest = guestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Guest not found"));
+                .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Guest with id " + id + " not found"));
 
         if (!guest.getEmail().equals(request.getEmail()) &&
                 guestRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -67,5 +72,12 @@ public class GuestService {
                         HttpStatus.NOT_FOUND,
                         "Guest with email " + email + " not found"));
         return new GuestResponse(guest);
+    }
+
+    public List<GuestResponse> getAllGuests() {
+        return guestRepository.findAll()
+                .stream()
+                .map(GuestResponse::new)
+                .toList();
     }
 }
