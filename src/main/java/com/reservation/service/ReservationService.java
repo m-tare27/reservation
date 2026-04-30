@@ -2,12 +2,9 @@ package com.reservation.service;
 
 import com.reservation.dto.ReservationRequest;
 import com.reservation.dto.ReservationResponse;
-import com.reservation.entity.Guest;
-import com.reservation.entity.Reservation;
-import com.reservation.entity.ReservationStatus;
+import com.reservation.entity.*;
 import com.reservation.mapper.Mapper;
-import com.reservation.repository.GuestRepository;
-import com.reservation.repository.ReservationRepository;
+import com.reservation.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,9 +23,13 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final GuestRepository guestRepository;
+    private final TravelAgentRepository travelAgentRepository;
+    private final CommissionRepository commissionRepository;
+    private final PaymentRepository paymentRepository;
     private final EmailService emailService;
 
     public ReservationResponse createReservation(ReservationRequest request){
+        Commission savedCommission = null;
         Guest guest = guestRepository.findByEmail(request.getGuestEmail())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
@@ -40,14 +41,35 @@ public class ReservationService {
                     "Arrival date must be today or later, and departure must be after arrival");
         }
 
+        if (request.getBookingSource() == BookingSource.TRAVEL_AGENCY) {
+            if (request.getTravelAgentId() == null){
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Travel agent ID is required when booking source is TRAVEL_AGENCY");
+            }
+            TravelAgent travelAgent = travelAgentRepository.findById(request.getTravelAgentId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "Travel agent with id " + request.getTravelAgentId() + " not found"));
+
+            Commission commission = new Commission();
+            commission.setAmount(request.getTotalAmount() * travelAgent.getCommissionRate()/100.0);
+            commission.setTravelAgent(travelAgent);
+            savedCommission = commissionRepository.save(commission);
+        }
+
+
         Reservation reservation = new Reservation();
         Mapper.mapRequestToEntity(reservation , request , guest);
-        reservation.setCreatedAt(LocalDateTime.now());
 
         boolean exists = reservationRepository.existsOverlappingReservation(null , request.getBungalowId() , request.getArrivalDate() , request.getDepartureDate());
         reservation.setReservationStatus(exists ? ReservationStatus.WAITLIST : ReservationStatus.PENDING);
 
         Reservation savedReservation = reservationRepository.save(reservation);
+        if (savedCommission != null) {
+            reservation.setCommission(savedCommission);
+            savedCommission.setReservation(savedReservation);
+        }
 
         return new ReservationResponse(savedReservation);
     }
@@ -70,6 +92,12 @@ public class ReservationService {
                     HttpStatus.BAD_REQUEST,
                     "Bungalow is booked for those dates"
             );
+
+        if (reservation.getReservationStatus() == ReservationStatus.CONFIRMED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Confirmed reservations cannot be updated");
+        }
 
         Mapper.mapRequestToEntity(reservation , request , reservation.getGuest());
         Reservation savedReservation = reservationRepository.save(reservation);
@@ -111,6 +139,21 @@ public class ReservationService {
         if (status == ReservationStatus.CONFIRMED){
             int loyaltyPoints = (int) reservation.getTotalAmount() / 10;
             guest.setLoyaltyPoints(guest.getLoyaltyPoints() + loyaltyPoints);
+
+            if (reservation.getBookingSource() == BookingSource.TRAVEL_AGENCY) {
+                Commission commission = reservation.getCommission();
+                Payment payment = new Payment();
+                payment.setAmount(commission.getAmount());
+                payment.setPaymentStatus(PaymentStatus.PENDING);
+                payment.setCommission(commission);
+
+                Payment savedPayment = paymentRepository.save(payment);
+                if (commission.getPayments() != null)
+                    commission.getPayments().add(savedPayment);
+                else
+                    commission.setPayments(List.of(savedPayment));
+
+            }
 
             emailService.sendReservationEmail(
                     reservation.getGuest().getEmail() ,reservation

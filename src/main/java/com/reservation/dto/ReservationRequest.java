@@ -1,5 +1,6 @@
 package com.reservation.dto;
 
+import com.reservation.entity.BookingSource;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -26,6 +27,9 @@ public class ReservationRequest {
 
     @NotNull(message = "Total amount is required")
     @Positive(message = "Total amount must be greater than 0")
-    @DecimalMax(value = "1000000.00", message = "Total amount cannot exceed 1,000,000")
     private double totalAmount;
+
+    private BookingSource bookingSource;
+
+    private Integer travelAgentId;
 }
