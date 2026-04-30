@@ -1,6 +1,7 @@
 package com.reservation.repository;
 
 import com.reservation.entity.Payment;
+import com.reservation.entity.PaymentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,4 +21,24 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
         AND p.paymentStatus = 'COMPLETED'""")
     Double sumCompletedPaymentsByReservationId(@Param("reservationId") Integer reservationId);
 
+    @Query("""
+    SELECT p
+    FROM Payment p
+    WHERE p.reservation.id = :reservationId
+      AND p.paymentStatus = :status
+""")
+    List<Payment> findByReservationIdAndStatus(
+            @Param("reservationId") Integer reservationId,
+            @Param("status") PaymentStatus status
+    );
+
+    @Query("""
+    SELECT SUM(p.amount)
+    FROM Payment p
+    WHERE p.reservation.bungalowId = :bungalowId
+      AND p.paymentStatus = 'COMPLETED'
+""")
+    Double getRevenueByBungalowId(
+            @Param("bungalowId") Integer bungalowId
+    );
 }

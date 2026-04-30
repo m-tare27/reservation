@@ -55,4 +55,10 @@ public class PaymentController {
         PaymentResponse response = paymentService.failPayment(paymentId);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/bungalow/{bungalowId}/revenue")
+    public ResponseEntity<Double> getRevenueByBungalowId(@PathVariable Integer bungalowId) {
+        Double revenue = paymentService.getRevenueByBungalowId(bungalowId);
+        return ResponseEntity.ok(revenue);
+    }
 }

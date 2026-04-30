@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -29,7 +30,6 @@ public class ReservationService {
     private final EmailService emailService;
 
     public ReservationResponse createReservation(ReservationRequest request){
-        Commission savedCommission = null;
         Guest guest = guestRepository.findByEmail(request.getGuestEmail())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
@@ -41,21 +41,24 @@ public class ReservationService {
                     "Arrival date must be today or later, and departure must be after arrival");
         }
 
-        if (request.getBookingSource() == BookingSource.TRAVEL_AGENCY) {
-            if (request.getTravelAgentId() == null){
+        Commission commission = null;
+
+        if (BookingSource.TRAVEL_AGENCY.equals(request.getBookingSource())) {
+
+            if (request.getTravelAgentId() == null) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "Travel agent ID is required when booking source is TRAVEL_AGENCY");
             }
+
             TravelAgent travelAgent = travelAgentRepository.findById(request.getTravelAgentId())
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatus.NOT_FOUND,
-                            "Travel agent with id " + request.getTravelAgentId() + " not found"));
+                            "Travel agent not found"));
 
-            Commission commission = new Commission();
-            commission.setAmount(request.getTotalAmount() * travelAgent.getCommissionRate()/100.0);
+            commission = new Commission();
+            commission.setAmount(request.getTotalAmount() * travelAgent.getCommissionRate() / 100.0);
             commission.setTravelAgent(travelAgent);
-            savedCommission = commissionRepository.save(commission);
         }
 
 
@@ -65,17 +68,18 @@ public class ReservationService {
         boolean exists = reservationRepository.existsOverlappingReservation(null , request.getBungalowId() , request.getArrivalDate() , request.getDepartureDate());
         reservation.setReservationStatus(exists ? ReservationStatus.WAITLIST : ReservationStatus.PENDING);
 
-        Reservation savedReservation = reservationRepository.save(reservation);
-        if (savedCommission != null) {
-            reservation.setCommission(savedCommission);
-            savedCommission.setReservation(savedReservation);
+        if (commission != null) {
+            reservation.setCommission(commission);
+            commission.setReservation(reservation);
         }
+
+        Reservation savedReservation = reservationRepository.save(reservation);
 
         return new ReservationResponse(savedReservation);
     }
 
     public ReservationResponse updateReservation(ReservationRequest request , Integer id){
-        Reservation reservation = reservationRepository.findById(id)
+        Reservation reservation = reservationRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Reservation with id " + id + " not found"));
@@ -106,29 +110,36 @@ public class ReservationService {
     }
 
     public void updateReservationStatus(Integer id, ReservationStatus status){
-        Reservation reservation = reservationRepository.findById(id)
+        Reservation reservation = reservationRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Reservation not found"));
 
         ReservationStatus currentStatus = reservation.getReservationStatus();
 
-        if (currentStatus != ReservationStatus.PENDING && currentStatus != ReservationStatus.WAITLIST) {
-            throw new ResponseStatusException(
+        switch (currentStatus) {
+            case PENDING, WAITLIST -> {
+                // allowed
+            }
+            default -> throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Only PENDING or WAITLIST reservations can be updated");
+                    "Invalid state transition"
+            );
         }
 
         if (currentStatus == ReservationStatus.WAITLIST && status == ReservationStatus.CONFIRMED) {
-            boolean hasConfirmedReservation = reservationRepository.existsConfirmedReservationForSameBungalow(
-                    id,
+            boolean exists = reservationRepository.existsOverlappingReservation(
+                    reservation.getId(),
+                    reservation.getBungalowId(),
                     reservation.getArrivalDate(),
-                    reservation.getDepartureDate());
+                    reservation.getDepartureDate()
+            );
 
-            if (hasConfirmedReservation) {
+            if (exists) {
                 throw new ResponseStatusException(
                         HttpStatus.CONFLICT,
-                        "Cannot confirm: another confirmed reservation exists for this bungalow during these dates");
+                        "Cannot confirm due to overlapping reservation"
+                );
             }
         }
 
@@ -142,16 +153,24 @@ public class ReservationService {
 
             if (reservation.getBookingSource() == BookingSource.TRAVEL_AGENCY) {
                 Commission commission = reservation.getCommission();
+                if (commission == null) {
+                    throw new ResponseStatusException(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            "Commission missing for travel agency booking"
+                    );
+                }
+
                 Payment payment = new Payment();
                 payment.setAmount(commission.getAmount());
                 payment.setPaymentStatus(PaymentStatus.PENDING);
                 payment.setCommission(commission);
+                payment.setReservation(reservation);
 
                 Payment savedPayment = paymentRepository.save(payment);
-                if (commission.getPayments() != null)
-                    commission.getPayments().add(savedPayment);
-                else
-                    commission.setPayments(List.of(savedPayment));
+                if (commission.getPayments() == null) {
+                    commission.setPayments(new ArrayList<>());
+                }
+                commission.getPayments().add(savedPayment);
 
             }
 

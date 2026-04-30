@@ -107,6 +107,19 @@ public class PaymentService {
 
         Payment savedPayment = paymentRepository.save(payment);
 
+        Double totalPaid = paymentRepository
+                .sumCompletedPaymentsByReservationId(reservation.getId());
+
+        if (totalPaid == null) totalPaid = 0.0;
+
+            if (totalPaid >= reservation.getTotalAmount() - TOLERANCE) {
+                paymentRepository.findByReservationIdAndStatus(reservation.getId(), PaymentStatus.PENDING)
+                        .forEach(p -> {
+                            p.setPaymentStatus(PaymentStatus.CANCELLED);
+                            paymentRepository.save(p);
+                        });
+            }
+
         return new PaymentResponse(savedPayment);
     }
 
@@ -156,6 +169,11 @@ public class PaymentService {
 
         payment.setPaymentStatus(PaymentStatus.FAILED);
         return new PaymentResponse(paymentRepository.save(payment));
+    }
+
+    public Double getRevenueByBungalowId(Integer bungalowId) {
+        Double revenue = paymentRepository.getRevenueByBungalowId(bungalowId);
+        return revenue != null ? revenue : 0.0;
     }
 
     //Helper Methods
