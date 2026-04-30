@@ -22,12 +22,14 @@ public class TravelAgentController {
     }
 
     @GetMapping("/{id}")
-    public TravelAgent getTravelAgentById(Integer id) {
+    public TravelAgent getTravelAgentById(@PathVariable Integer id) {
         return travelAgentService.getTravelAgentById(id);
     }
 
     @PutMapping("/{id}")
-    public TravelAgent updateTravelAgent(Integer id, TravelAgent updatedTravelAgent) {
+    public TravelAgent updateTravelAgent(
+            @PathVariable Integer id,
+            @Valid @RequestBody TravelAgentRequest updatedTravelAgent) {
         return travelAgentService.updateTravelAgent(id, updatedTravelAgent);
     }
 

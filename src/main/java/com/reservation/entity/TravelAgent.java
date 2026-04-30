@@ -16,9 +16,6 @@ public class TravelAgent {
 
     private String name;
 
-    @NotBlank
-    @DecimalMin("0.0")
-    @DecimalMax("20.0")
     private Double commissionRate;
 
     @OneToMany(mappedBy = "travelAgent")

@@ -17,6 +17,8 @@ public class TravelAgentService {
     private final TravelAgentRepository travelAgentRepository;
 
     public TravelAgent createTravelAgent(TravelAgentRequest request) {
+        validateTravelAgent(request);
+
         TravelAgent travelAgent = new TravelAgent();
         travelAgent.setName(request.getName());
         travelAgent.setCommissionRate(request.getCommissionRate());
@@ -28,7 +30,9 @@ public class TravelAgentService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Travel Agent not found"));
     }
 
-    public TravelAgent updateTravelAgent(Integer id, TravelAgent updatedTravelAgent) {
+    public TravelAgent updateTravelAgent(Integer id, TravelAgentRequest updatedTravelAgent) {
+        validateTravelAgent(updatedTravelAgent);
+
         TravelAgent existingTravelAgent = getTravelAgentById(id);
 
         existingTravelAgent.setName(updatedTravelAgent.getName());
@@ -39,5 +43,19 @@ public class TravelAgentService {
 
     public List<TravelAgent> getAllTravelAgents() {
         return travelAgentRepository.findAll();
+    }
+
+    // Helper methods
+
+    private void validateTravelAgent(TravelAgentRequest request) {
+        if (request.getName() == null || request.getName().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name is required");
+        }
+
+        Double rate = request.getCommissionRate();
+        if (rate == null || rate < 0 || rate > 20) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Commission rate must be between 0% and 20%");
+        }
     }
 }

@@ -16,6 +16,6 @@ public class TravelAgentRequest {
 
     @NotNull(message = "Commission rate is required")
     @DecimalMin(value = "0.0", message = "Commission rate cannot be negative")
-    @DecimalMax(value = "100.0", message = "Commission rate cannot exceed 100%")
+    @DecimalMax(value = "20.0", message = "Commission rate cannot exceed 20%")
     private Double commissionRate;
 }
