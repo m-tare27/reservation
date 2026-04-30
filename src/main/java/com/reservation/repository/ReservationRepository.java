@@ -2,7 +2,9 @@ package com.reservation.repository;
 
 import com.reservation.entity.Reservation;
 import com.reservation.entity.ReservationStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -51,4 +53,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
             @Param("reservationId") Integer reservationId,
             @Param("arrivalDate") LocalDate arrivalDate,
             @Param("departureDate") LocalDate departureDate);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM Reservation r WHERE r.id = :id")
+    Optional<Reservation> findByIdForUpdate(@Param("id") Integer id);
 }

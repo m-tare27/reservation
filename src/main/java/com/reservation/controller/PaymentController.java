@@ -38,15 +38,21 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/complete/{paymentId}")
+    @PatchMapping("/{paymentId}/complete")
     public ResponseEntity<PaymentResponse> completePayment(@PathVariable Integer paymentId) {
         PaymentResponse response = paymentService.completePayment(paymentId);
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/refund/{paymentId}")
+    @PatchMapping("/{paymentId}/refund")
     public ResponseEntity<PaymentResponse> refundPayment(@PathVariable Integer paymentId) {
         PaymentResponse response = paymentService.refundPayment(paymentId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{paymentId}/fail")
+    public ResponseEntity<PaymentResponse> failPayment(@PathVariable Integer paymentId) {
+        PaymentResponse response = paymentService.failPayment(paymentId);
         return ResponseEntity.ok(response);
     }
 }

@@ -19,4 +19,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
         WHERE p.reservation.id = :reservationId  
         AND p.paymentStatus = 'COMPLETED'""")
     Double sumCompletedPaymentsByReservationId(@Param("reservationId") Integer reservationId);
+
 }
