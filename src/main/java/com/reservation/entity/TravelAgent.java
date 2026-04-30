@@ -1,6 +1,7 @@
 package com.reservation.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.util.List;
@@ -15,6 +16,9 @@ public class TravelAgent {
 
     private String name;
 
+    @NotBlank
+    @DecimalMin("0.0")
+    @DecimalMax("20.0")
     private Double commissionRate;
 
     @OneToMany(mappedBy = "travelAgent")
