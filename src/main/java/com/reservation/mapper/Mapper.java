@@ -4,7 +4,6 @@ import com.reservation.dto.CancellationPolicyRequest;
 import com.reservation.dto.ReservationRequest;
 import com.reservation.entity.CancellationPolicy;
 import com.reservation.entity.Guest;
-import com.reservation.entity.RefundStatus;
 import com.reservation.entity.Reservation;
 
 import java.time.LocalDateTime;
@@ -16,6 +15,8 @@ public class Mapper {
         reservation.setArrivalDate(request.getArrivalDate());
         reservation.setDepartureDate(request.getDepartureDate());
         reservation.setTotalAmount(request.getTotalAmount());
+        reservation.setBookingSource(request.getBookingSource());
+        reservation.setCreatedAt(LocalDateTime.now());
     }
 
     static public void mapRequestToEntity(CancellationPolicy cancellationPolicy , CancellationPolicyRequest policy){
