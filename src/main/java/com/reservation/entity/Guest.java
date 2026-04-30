@@ -3,6 +3,7 @@ package com.reservation.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -20,5 +21,5 @@ public class Guest {
     int loyaltyPoints;
 
     @OneToMany(mappedBy = "guest", cascade = CascadeType.ALL)
-    List<Reservation> reservations;
+    List<Reservation> reservations = new ArrayList<>();
 }
