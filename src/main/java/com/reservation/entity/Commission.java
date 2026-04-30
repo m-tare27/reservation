@@ -3,6 +3,8 @@ package com.reservation.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.List;
+
 @Entity
 @Data
 public class Commission {
@@ -19,4 +21,7 @@ public class Commission {
     @ManyToOne
     @JoinColumn(name = "travel_agent_id")
     private TravelAgent travelAgent;
+
+    @OneToMany(mappedBy = "commission", cascade = CascadeType.ALL)
+    private List<Payment> payments;
 }

@@ -20,4 +20,7 @@ public class Payment {
     @JoinColumn(name = "reservation_id")
     Reservation reservation;
 
+    @ManyToOne
+    @JoinColumn(name = "commission_id")
+    Commission commission;
 }
