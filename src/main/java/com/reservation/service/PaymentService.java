@@ -112,7 +112,7 @@ public class PaymentService {
 
         if (totalPaid == null) totalPaid = 0.0;
 
-            if (totalPaid >= reservation.getTotalAmount() - TOLERANCE) {
+        if (totalPaid >= reservation.getTotalAmount() - TOLERANCE) {
                 paymentRepository.findByReservationIdAndStatus(reservation.getId(), PaymentStatus.PENDING)
                         .forEach(p -> {
                             p.setPaymentStatus(PaymentStatus.CANCELLED);
@@ -134,7 +134,7 @@ public class PaymentService {
 
             case COMPLETED -> payment.setPaymentStatus(PaymentStatus.REFUNDED);
 
-            case PENDING, FAILED -> throw new ResponseStatusException(
+            case PENDING, FAILED , CANCELLED -> throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Only completed payments can be refunded");
 
