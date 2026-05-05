@@ -9,6 +9,7 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.lowagie.text.pdf.draw.LineSeparator;
 import com.reservation.entity.Reservation;
+import com.reservation.repository.ReservationRepository;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
@@ -24,10 +25,43 @@ import java.time.format.DateTimeFormatter;
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final ReservationRepository reservationRepository;
 
     public void sendReservationEmail(String to, Reservation reservation) {
 
         try {
+            byte[] pdf = generatePdf(reservation);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+            helper.setTo(to);
+            helper.setSubject("Reservation Report");
+            helper.setText("""
+                        <h2>Reservation Confirmed</h2>
+                        <p>Your booking has been successfully created.</p>
+                        <p>Please find your receipt attached.</p>
+                    """, true);
+            helper.setFrom("manastare27@gmail.com");
+            helper.addAttachment(
+                    "reservation_" + reservation.getId() + ".pdf",
+                    new ByteArrayResource(pdf)
+            );
+
+            mailSender.send(message);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send email ", e);
+        }
+    }
+
+    public void sendReservationEmail(String to, Integer reservationId) {
+
+        try {
+
+            Reservation reservation = reservationRepository.findById(reservationId)
+                    .orElseThrow(() -> new RuntimeException("Reservation not found with ID: " + reservationId));
+
             byte[] pdf = generatePdf(reservation);
 
             MimeMessage message = mailSender.createMimeMessage();

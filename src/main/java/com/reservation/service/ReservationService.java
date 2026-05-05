@@ -1,5 +1,7 @@
 package com.reservation.service;
 
+import com.reservation.config.RabbitConfig;
+import com.reservation.dto.ReservationConfirmedEvent;
 import com.reservation.dto.ReservationRequest;
 import com.reservation.dto.ReservationResponse;
 import com.reservation.entity.*;
@@ -7,12 +9,12 @@ import com.reservation.mapper.Mapper;
 import com.reservation.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,9 +27,10 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final GuestRepository guestRepository;
     private final TravelAgentRepository travelAgentRepository;
-    private final CommissionRepository commissionRepository;
     private final PaymentRepository paymentRepository;
     private final EmailService emailService;
+    private final RabbitTemplate rabbitTemplate;
+
 
     public ReservationResponse createReservation(ReservationRequest request){
         Guest guest = guestRepository.findByEmail(request.getGuestEmail())
@@ -174,8 +177,17 @@ public class ReservationService {
 
             }
 
-            emailService.sendReservationEmail(
-                    reservation.getGuest().getEmail() ,reservation
+            ReservationConfirmedEvent event =
+                    new ReservationConfirmedEvent(
+                            reservation.getGuest().getEmail(),
+                            reservation.getGuest().getName(),
+                            reservation.getId()
+                    );
+
+            rabbitTemplate.convertAndSend(
+                    RabbitConfig.EXCHANGE,
+                    RabbitConfig.ROUTING_KEY,
+                    event
             );
         }
     }
