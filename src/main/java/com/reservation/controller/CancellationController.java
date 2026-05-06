@@ -4,6 +4,8 @@ import com.reservation.dto.CancellationRequest;
 import com.reservation.dto.CancellationResponse;
 import com.reservation.entity.RefundStatus;
 import com.reservation.service.CancellationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,10 +18,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/cancellations")
 @RequiredArgsConstructor
+@Tag(name = "Cancellation API", description = "APIs for managing reservation cancellations")
 public class CancellationController {
     private final CancellationService cancellationService;
 
     @PostMapping
+    @Operation(summary = "Cancel a reservation", description = "Cancels a reservation and processes refund if applicable")
     public ResponseEntity<CancellationResponse> cancelReservation(
             @Valid @RequestBody CancellationRequest request) {
 
@@ -28,6 +32,7 @@ public class CancellationController {
     }
 
     @GetMapping
+    @Operation(summary = "Get cancellations", description = "Retrieves a list of cancellations with optional filters")
     public ResponseEntity<List<CancellationResponse>> getCancellations(
             @RequestParam(required = false) LocalDateTime cancelledAt,
             @RequestParam(required = false) Long daysBeforeCheckIn,
@@ -39,12 +44,14 @@ public class CancellationController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get cancellation by ID", description = "Retrieves cancellation details by its ID")
     public ResponseEntity<CancellationResponse> getCancellationById(@PathVariable Integer id) {
         CancellationResponse response = cancellationService.getCancellationById(id);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/refund-status/{id}")
+    @Operation(summary = "Update refund status", description = "Updates the refund status of a cancellation")
     public ResponseEntity<CancellationResponse> updateRefundStatus(
             @PathVariable Integer id,
             @RequestParam RefundStatus refundStatus) {

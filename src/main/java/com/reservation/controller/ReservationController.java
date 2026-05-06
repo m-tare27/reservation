@@ -4,6 +4,8 @@ import com.reservation.dto.ReservationRequest;
 import com.reservation.dto.ReservationResponse;
 import com.reservation.entity.ReservationStatus;
 import com.reservation.service.ReservationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,11 +18,13 @@ import java.util.List;
 @RestController
 @RequestMapping("api/reservations")
 @RequiredArgsConstructor
+@Tag(name = "Reservation API", description = "APIs for managing reservations")
 public class ReservationController {
 
     private final ReservationService reservationService;
 
     @PostMapping
+    @Operation(summary = "Create a new reservation", description = "Creates a new reservation with the provided details.")
     public ResponseEntity<ReservationResponse> createReservation(
             @Valid @RequestBody ReservationRequest request) {
 
@@ -29,6 +33,7 @@ public class ReservationController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update an existing reservation", description = "Updates the reservation with the specified ID using the provided details.")
     public ResponseEntity<ReservationResponse> updateReservation(
             @Valid @RequestBody ReservationRequest request , @PathVariable Integer id) {
 
@@ -37,6 +42,7 @@ public class ReservationController {
     }
 
     @PatchMapping("/{id}/status")
+    @Operation(summary = "Update reservation status", description = "Updates the status of the reservation with the specified ID.")
     public ResponseEntity<Void> updateReservationStatus(
             @PathVariable Integer id,
             @RequestParam ReservationStatus status) {
@@ -46,6 +52,7 @@ public class ReservationController {
     }
 
     @GetMapping
+    @Operation(summary = "Get reservations with optional filters", description = "Retrieves a list of reservations based on the provided optional filters such as ID, bungalow ID, status, and date range.")
     public ResponseEntity<List<ReservationResponse>> getReservations(
             @RequestParam(required = false) Integer id,
             @RequestParam(required = false) Integer bungalowId,
