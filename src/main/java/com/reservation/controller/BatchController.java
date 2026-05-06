@@ -1,6 +1,7 @@
 package com.reservation.controller;
 
 import com.reservation.service.JobService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.job.parameters.InvalidJobParametersException;
 import org.springframework.batch.core.launch.JobExecutionAlreadyRunningException;
@@ -13,11 +14,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/batch")
 @RequiredArgsConstructor
+@Tag(name = "Batch API", description = "APIs for executing batch jobs related to reservation management")
 public class BatchController {
     private final JobService jobService;
 
     @GetMapping("/refund")
     public void handleRefundStatus() throws JobInstanceAlreadyCompleteException, InvalidJobParametersException, JobExecutionAlreadyRunningException, JobRestartException {
         jobService.executeCancellationRefundReconciliationJob();
+    }
+
+    @GetMapping("/expiry")
+    public void handleReservationExpiry() throws JobInstanceAlreadyCompleteException, InvalidJobParametersException, JobExecutionAlreadyRunningException, JobRestartException {
+        jobService.executeReservationExpiryJob();
     }
 }
