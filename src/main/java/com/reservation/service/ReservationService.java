@@ -1,7 +1,7 @@
 package com.reservation.service;
 
 import com.reservation.config.RabbitConfig;
-import com.reservation.dto.ReservationConfirmedEvent;
+import com.reservation.dto.event.ReservationConfirmedEvent;
 import com.reservation.dto.ReservationRequest;
 import com.reservation.dto.ReservationResponse;
 import com.reservation.entity.*;

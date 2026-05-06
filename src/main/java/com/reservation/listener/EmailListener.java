@@ -1,10 +1,10 @@
-package com.reservation.service;
+package com.reservation.listener;
 
 import com.reservation.config.RabbitConfig;
-import com.reservation.dto.ReservationConfirmedEvent;
+import com.reservation.dto.event.ReservationConfirmedEvent;
+import com.reservation.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -21,6 +21,40 @@
         </encoder>
     </appender>
 
+    <!-- ===== RESERVATION ASPECT APPENDER ===== -->
+    <appender name="RESERVATION_APPENDER"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+        <file>logs/reservation-aspect.log</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/reservation-aspect.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ===== CANCELLATION ASPECT APPENDER ===== -->
+    <appender name="CANCELLATION_APPENDER"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+        <file>logs/cancellation-aspect.log</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/cancellation-aspect.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
     <!-- ===== DEFAULT APPLICATION APPENDER ===== -->
     <appender name="DEFAULT_APPENDER"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -43,6 +77,20 @@
             level="INFO"
             additivity="false">
         <appender-ref ref="PAYMENT_APPENDER"/>
+    </logger>
+
+    <!-- ===== LOGGER FOR RESERVATION ASPECT ===== -->
+    <logger name="com.reservation.aspect.ReservationAspect"
+            level="INFO"
+            additivity="false">
+        <appender-ref ref="RESERVATION_APPENDER"/>
+    </logger>
+
+    <!-- ===== LOGGER FOR CANCELLATION ASPECT ===== -->
+    <logger name="com.reservation.aspect.CancellationAspect"
+            level="INFO"
+            additivity="false">
+        <appender-ref ref="CANCELLATION_APPENDER"/>
     </logger>
 
     <!-- ===== ROOT LOGGER (everything else) ===== -->

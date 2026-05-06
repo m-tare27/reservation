@@ -1,6 +1,5 @@
-package com.reservation.dto;
+package com.reservation.dto.event;
 
-import com.reservation.entity.Reservation;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
