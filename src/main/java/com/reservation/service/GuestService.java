@@ -3,7 +3,9 @@ package com.reservation.service;
 import com.reservation.dto.GuestRequest;
 import com.reservation.dto.GuestResponse;
 import com.reservation.entity.Guest;
+import com.reservation.entity.Reservation;
 import com.reservation.repository.GuestRepository;
+import com.reservation.repository.ReservationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
@@ -19,6 +21,7 @@ import java.util.List;
 public class GuestService {
 
     private final GuestRepository guestRepository;
+    private final ReservationRepository reservationRepository;
 
     public GuestResponse createGuest(GuestRequest request) {
 
@@ -79,5 +82,18 @@ public class GuestService {
                 .stream()
                 .map(GuestResponse::new)
                 .toList();
+    }
+
+    public void addLoyaltyPoints(Integer guestId , Double totalAmount) {
+        Guest guest = guestRepository.findById(guestId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Guest with id " + guestId + " not found"));
+
+        int pointsToAdd = (int) (totalAmount / 10);
+        guest.setLoyaltyPoints(
+                guest.getLoyaltyPoints() + pointsToAdd
+        );
+        guestRepository.save(guest);
     }
 }

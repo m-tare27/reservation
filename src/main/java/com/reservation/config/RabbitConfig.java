@@ -11,11 +11,15 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfig {
 
+//  QUEUES
     public static final String COMMISSION_QUEUE =
             "commission.queue";
 
     public static final String EMAIL_QUEUE =
             "email.queue";
+
+    public static final String LOYALTY_QUEUE =
+            "loyalty.queue";
 
     public static final String RESERVATION_CREATED_EXCHANGE =
             "reservation.created.exchange";
@@ -23,7 +27,6 @@ public class RabbitConfig {
     public static final String RESERVATION_CONFIRMED_EXCHANGE =
             "reservation.confirmed.exchange";
 
-    public static final String ROUTING_KEY = "reservation.email";
 
     @Bean
     public Queue commissionQueue() {
@@ -33,6 +36,11 @@ public class RabbitConfig {
     @Bean
     public Queue emailQueue() {
         return new Queue(EMAIL_QUEUE);
+    }
+
+    @Bean
+    public Queue loyaltyQueue() {
+        return new Queue(LOYALTY_QUEUE);
     }
 
     @Bean
@@ -64,6 +72,13 @@ public class RabbitConfig {
     }
 
     @Bean
+    public Binding loyaltyBinding() {
+        return BindingBuilder
+                .bind(loyaltyQueue())
+                .to(reservationConfirmedExchange());
+    }
+
+    @Bean
     public MessageConverter messageConverter() {
         return new JacksonJsonMessageConverter();
     }
@@ -71,7 +86,7 @@ public class RabbitConfig {
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
-        template.setMessageConverter(new JacksonJsonMessageConverter());
+        template.setMessageConverter(messageConverter());
         return template;
     }
 }

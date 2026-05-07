@@ -68,24 +68,8 @@ public class ReservationService {
                         HttpStatus.NOT_FOUND,
                         "Reservation with id " + id + " not found"));
 
-        if (isInvalidReservationDate(request.getArrivalDate(), request.getDepartureDate())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid date range provided");
-        }
 
-        boolean exists = reservationRepository.existsOverlappingReservation(id , request.getBungalowId() , request.getArrivalDate() , request.getDepartureDate());
-        if(exists)
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Bungalow is booked for those dates"
-            );
-
-        if (reservation.getReservationStatus() == ReservationStatus.CONFIRMED) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Confirmed reservations cannot be updated");
-        }
+        validateReservation(reservation , request);
 
         Mapper.mapRequestToEntity(reservation , request , reservation.getGuest());
         Reservation savedReservation = reservationRepository.save(reservation);
@@ -99,78 +83,25 @@ public class ReservationService {
                         HttpStatus.NOT_FOUND,
                         "Reservation not found"));
 
-        ReservationStatus currentStatus = reservation.getReservationStatus();
-
-        switch (currentStatus) {
-            case PENDING, WAITLIST -> {
-                // allowed
-            }
-            default -> throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid state transition"
-            );
-        }
-
-        if (currentStatus == ReservationStatus.WAITLIST && status == ReservationStatus.CONFIRMED) {
-            boolean exists = reservationRepository.existsOverlappingReservation(
-                    reservation.getId(),
-                    reservation.getBungalowId(),
-                    reservation.getArrivalDate(),
-                    reservation.getDepartureDate()
-            );
-
-            if (exists) {
-                throw new ResponseStatusException(
-                        HttpStatus.CONFLICT,
-                        "Cannot confirm due to overlapping reservation"
-                );
-            }
-        }
+        validateReservationUpdate(reservation , status);
 
         reservation.setReservationStatus(status);
         reservationRepository.save(reservation);
 
-        Guest guest = reservation.getGuest();
-        if (status == ReservationStatus.CONFIRMED){
-            int loyaltyPoints = (int) reservation.getTotalAmount() / 10;
-            guest.setLoyaltyPoints(guest.getLoyaltyPoints() + loyaltyPoints);
+        ReservationConfirmedEvent reservationConfirmedEvent =
+                new ReservationConfirmedEvent(
+                        reservation.getGuest().getEmail(),
+                        reservation.getGuest().getName(),
+                        reservation.getId(),
+                        reservation.getGuest().getId(),
+                        reservation.getTotalAmount()
+                );
 
-            if (reservation.getBookingSource() == BookingSource.TRAVEL_AGENCY) {
-                Commission commission = reservation.getCommission();
-                if (commission == null) {
-                    throw new ResponseStatusException(
-                            HttpStatus.INTERNAL_SERVER_ERROR,
-                            "Commission missing for travel agency booking"
-                    );
-                }
-
-                Payment payment = new Payment();
-                payment.setAmount(commission.getAmount());
-                payment.setPaymentStatus(PaymentStatus.PENDING);
-                payment.setCommission(commission);
-                payment.setReservation(reservation);
-
-                Payment savedPayment = paymentRepository.save(payment);
-                if (commission.getPayments() == null) {
-                    commission.setPayments(new ArrayList<>());
-                }
-                commission.getPayments().add(savedPayment);
-
-            }
-
-            ReservationConfirmedEvent reservationConfirmedEvent =
-                    new ReservationConfirmedEvent(
-                            reservation.getGuest().getEmail(),
-                            reservation.getGuest().getName(),
-                            reservation.getId()
-                    );
-
-            rabbitTemplate.convertAndSend(
-                    RabbitConfig.RESERVATION_CONFIRMED_EXCHANGE,
-                    "",
-                    reservationConfirmedEvent
-            );
-        }
+        rabbitTemplate.convertAndSend(
+                RabbitConfig.RESERVATION_CONFIRMED_EXCHANGE,
+                "",
+                reservationConfirmedEvent
+        );
     }
 
     public List<ReservationResponse> getReservation() {
@@ -245,6 +176,57 @@ public class ReservationService {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Arrival date must be today or later, and departure must be after arrival");
+        }
+    }
+
+    public void validateReservation(Reservation reservation , ReservationRequest request) {
+        if (isInvalidReservationDate(request.getArrivalDate(), request.getDepartureDate())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid date range provided");
+        }
+
+        boolean exists = reservationRepository.existsOverlappingReservation(reservation.getId() , request.getBungalowId() , request.getArrivalDate() , request.getDepartureDate());
+        if(exists)
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Bungalow is booked for those dates"
+            );
+
+        if (reservation.getReservationStatus() == ReservationStatus.CONFIRMED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Confirmed reservations cannot be updated");
+        }
+    }
+
+    public void validateReservationUpdate(Reservation reservation , ReservationStatus status) {
+        ReservationStatus currentStatus = reservation.getReservationStatus();
+
+        switch (currentStatus) {
+            case PENDING, WAITLIST -> {
+                // allowed
+            }
+            default -> throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid state transition"
+            );
+        }
+
+        if (currentStatus == ReservationStatus.WAITLIST && status == ReservationStatus.CONFIRMED) {
+            boolean exists = reservationRepository.existsOverlappingReservation(
+                    reservation.getId(),
+                    reservation.getBungalowId(),
+                    reservation.getArrivalDate(),
+                    reservation.getDepartureDate()
+            );
+
+            if (exists) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Cannot confirm due to overlapping reservation"
+                );
+            }
         }
     }
 }
