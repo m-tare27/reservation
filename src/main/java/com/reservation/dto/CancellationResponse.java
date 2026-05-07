@@ -1,7 +1,7 @@
 package com.reservation.dto;
 
 import com.reservation.entity.Cancellation;
-import com.reservation.entity.RefundStatus;
+import com.reservation.enums.RefundStatus;
 import lombok.Data;
 
 import java.time.LocalDateTime;

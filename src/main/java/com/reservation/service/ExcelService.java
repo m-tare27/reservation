@@ -2,7 +2,7 @@ package com.reservation.service;
 
 import com.reservation.entity.Guest;
 import com.reservation.entity.Reservation;
-import com.reservation.entity.ReservationStatus;
+import com.reservation.enums.ReservationStatus;
 import com.reservation.repository.ReservationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

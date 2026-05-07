@@ -9,4 +9,8 @@ import org.springframework.stereotype.Service;
 public class CommissionService {
 
     private final CommissionRepository commissionRepository;
+
+    public void calculateCommission() {
+
+    }
 }

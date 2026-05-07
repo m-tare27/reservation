@@ -1,7 +1,7 @@
 package com.reservation.repository;
 
 import com.reservation.entity.Payment;
-import com.reservation.entity.PaymentStatus;
+import com.reservation.enums.PaymentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

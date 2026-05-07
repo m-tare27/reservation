@@ -1,7 +1,7 @@
 package com.reservation.processor;
 
 import com.reservation.entity.Reservation;
-import com.reservation.entity.ReservationStatus;
+import com.reservation.enums.ReservationStatus;
 import org.jspecify.annotations.Nullable;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 

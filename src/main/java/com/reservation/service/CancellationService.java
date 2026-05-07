@@ -4,6 +4,9 @@ import com.reservation.dto.CancellationRequest;
 import com.reservation.dto.CancellationResponse;
 import com.reservation.dto.event.ReservationCancelledEvent;
 import com.reservation.entity.*;
+import com.reservation.enums.PaymentStatus;
+import com.reservation.enums.RefundStatus;
+import com.reservation.enums.ReservationStatus;
 import com.reservation.repository.CancellationPolicyRepository;
 import com.reservation.repository.CancellationRepository;
 import com.reservation.repository.ReservationRepository;
@@ -88,6 +91,20 @@ public class CancellationService {
         reservation.setReservationStatus(ReservationStatus.CANCELLED);
 
         Cancellation savedCancellation = cancellationRepository.save(cancellation);
+
+        if (reservation.getCommission() != null){
+            Commission commission = reservation.getCommission();
+            commission.getPayments()
+                    .forEach(payment -> payment.setPaymentStatus(PaymentStatus.CANCELLED));
+
+            if(refundAmount.doubleValue() > 0){
+                Payment payment = new Payment();
+                payment.setCommission(commission);
+                payment.setPaymentStatus(PaymentStatus.PENDING);
+                payment.setAmount(refundAmount.doubleValue());
+                commission.getPayments().add(payment);
+            }
+        }
 
         eventPublisher.publishEvent(
                 new ReservationCancelledEvent(

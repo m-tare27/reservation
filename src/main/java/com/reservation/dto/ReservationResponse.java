@@ -1,8 +1,7 @@
 package com.reservation.dto;
 
-import com.reservation.entity.Guest;
 import com.reservation.entity.Reservation;
-import com.reservation.entity.ReservationStatus;
+import com.reservation.enums.ReservationStatus;
 import lombok.Data;
 
 import java.time.LocalDate;

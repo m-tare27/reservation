@@ -1,5 +1,6 @@
 package com.reservation.entity;
 
+import com.reservation.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 

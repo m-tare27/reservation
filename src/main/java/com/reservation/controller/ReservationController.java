@@ -2,7 +2,7 @@ package com.reservation.controller;
 
 import com.reservation.dto.ReservationRequest;
 import com.reservation.dto.ReservationResponse;
-import com.reservation.entity.ReservationStatus;
+import com.reservation.enums.ReservationStatus;
 import com.reservation.service.ReservationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

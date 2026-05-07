@@ -1,6 +1,6 @@
 package com.reservation.dto;
 
-import com.reservation.entity.BookingSource;
+import com.reservation.enums.BookingSource;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 

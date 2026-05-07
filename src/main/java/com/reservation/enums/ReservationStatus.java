@@ -1,9 +1,10 @@
-package com.reservation.entity;
+package com.reservation.enums;
 
 public enum ReservationStatus {
     PENDING,
     CONFIRMED,
     CANCELLED,
     EXPIRED,
-    WAITLIST
+    WAITLIST,
+    COMPLETED
 }

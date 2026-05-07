@@ -3,7 +3,7 @@ package com.reservation.service;
 import com.reservation.dto.PaymentRequest;
 import com.reservation.dto.PaymentResponse;
 import com.reservation.entity.Payment;
-import com.reservation.entity.PaymentStatus;
+import com.reservation.enums.PaymentStatus;
 import com.reservation.entity.Reservation;
 import com.reservation.repository.PaymentRepository;
 import com.reservation.repository.ReservationRepository;

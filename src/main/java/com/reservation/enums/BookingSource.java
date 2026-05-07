@@ -1,4 +1,4 @@
-package com.reservation.entity;
+package com.reservation.enums;
 
 public enum BookingSource {
     DIRECT,

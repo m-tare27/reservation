@@ -2,7 +2,7 @@ package com.reservation.controller;
 
 import com.reservation.dto.CancellationRequest;
 import com.reservation.dto.CancellationResponse;
-import com.reservation.entity.RefundStatus;
+import com.reservation.enums.RefundStatus;
 import com.reservation.service.CancellationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
