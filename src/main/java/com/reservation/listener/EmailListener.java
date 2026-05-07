@@ -15,7 +15,7 @@ public class EmailListener {
 
     private final EmailService emailService;
 
-    @RabbitListener(queues = RabbitConfig.QUEUE)
+    @RabbitListener(queues = RabbitConfig.EMAIL_QUEUE)
     public void handleReservationEmail(ReservationConfirmedEvent event) {
 
         System.out.println("Sending email to: " + event.getEmail());

@@ -4,6 +4,7 @@ import com.reservation.config.RabbitConfig;
 import com.reservation.dto.event.ReservationConfirmedEvent;
 import com.reservation.dto.ReservationRequest;
 import com.reservation.dto.ReservationResponse;
+import com.reservation.dto.event.ReservationCreationEvent;
 import com.reservation.entity.*;
 import com.reservation.enums.BookingSource;
 import com.reservation.enums.PaymentStatus;
@@ -29,44 +30,16 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final GuestRepository guestRepository;
-    private final TravelAgentRepository travelAgentRepository;
     private final PaymentRepository paymentRepository;
-    private final EmailService emailService;
     private final RabbitTemplate rabbitTemplate;
 
 
     public ReservationResponse createReservation(ReservationRequest request){
+        validateReservation(request);
         Guest guest = guestRepository.findByEmail(request.getGuestEmail())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Guest with email " + request.getGuestEmail() + " not found"));
-
-        if (isInvalidReservationDate(request.getArrivalDate(), request.getDepartureDate())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Arrival date must be today or later, and departure must be after arrival");
-        }
-
-        Commission commission = null;
-
-        if (BookingSource.TRAVEL_AGENCY.equals(request.getBookingSource())) {
-
-            if (request.getTravelAgentId() == null) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Travel agent ID is required when booking source is TRAVEL_AGENCY");
-            }
-
-            TravelAgent travelAgent = travelAgentRepository.findById(request.getTravelAgentId())
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Travel agent not found"));
-
-            commission = new Commission();
-            commission.setAmount(request.getTotalAmount() * travelAgent.getCommissionRate() / 100.0);
-            commission.setTravelAgent(travelAgent);
-        }
-
 
         Reservation reservation = new Reservation();
         Mapper.mapRequestToEntity(reservation , request , guest);
@@ -74,12 +47,17 @@ public class ReservationService {
         boolean exists = reservationRepository.existsOverlappingReservation(null , request.getBungalowId() , request.getArrivalDate() , request.getDepartureDate());
         reservation.setReservationStatus(exists ? ReservationStatus.WAITLIST : ReservationStatus.PENDING);
 
-        if (commission != null) {
-            reservation.setCommission(commission);
-            commission.setReservation(reservation);
-        }
-
         Reservation savedReservation = reservationRepository.save(reservation);
+        ReservationCreationEvent reservationCreationEvent = new ReservationCreationEvent(
+                savedReservation.getId(),
+                request.getTravelAgentId(),
+                request.getBookingSource()
+        );
+        rabbitTemplate.convertAndSend(
+                RabbitConfig.RESERVATION_CREATED_EXCHANGE,
+                "",
+                reservationCreationEvent
+        );
 
         return new ReservationResponse(savedReservation);
     }
@@ -180,7 +158,7 @@ public class ReservationService {
 
             }
 
-            ReservationConfirmedEvent event =
+            ReservationConfirmedEvent reservationConfirmedEvent =
                     new ReservationConfirmedEvent(
                             reservation.getGuest().getEmail(),
                             reservation.getGuest().getName(),
@@ -188,9 +166,9 @@ public class ReservationService {
                     );
 
             rabbitTemplate.convertAndSend(
-                    RabbitConfig.EXCHANGE,
-                    RabbitConfig.ROUTING_KEY,
-                    event
+                    RabbitConfig.RESERVATION_CONFIRMED_EXCHANGE,
+                    "",
+                    reservationConfirmedEvent
             );
         }
     }
@@ -252,5 +230,21 @@ public class ReservationService {
     public boolean isInvalidReservationDate(LocalDate arrivalDate, LocalDate departureDate) {
         return arrivalDate.isBefore(LocalDate.now()) ||
                 !departureDate.isAfter(arrivalDate);
+    }
+
+    public void validateReservation(ReservationRequest request) {
+        if (BookingSource.TRAVEL_AGENCY.equals(request.getBookingSource())) {
+
+            if (request.getTravelAgentId() == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Travel agent ID is required when booking source is TRAVEL_AGENCY");
+            }
+        }
+        if (isInvalidReservationDate(request.getArrivalDate(), request.getDepartureDate())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Arrival date must be today or later, and departure must be after arrival");
+        }
     }
 }
