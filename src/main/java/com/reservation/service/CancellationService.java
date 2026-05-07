@@ -81,11 +81,11 @@ public class CancellationService {
         cancellation.setRefundStatus(RefundStatus.PENDING);
         cancellation.setReason(request.getReason());
 
-        BigDecimal totalAmount = new BigDecimal(reservation.getTotalAmount());
-        BigDecimal refundPercentage = new BigDecimal(policy.getRefundPercentage());
+        BigDecimal totalAmount = BigDecimal.valueOf(reservation.getTotalAmount());
+        BigDecimal refundPercentage = BigDecimal.valueOf(policy.getRefundPercentage());
         BigDecimal refundAmount = totalAmount
                 .multiply(refundPercentage)
-                .divide(new BigDecimal(100), 2, RoundingMode.HALF_UP);
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
         cancellation.setRefundAmount(refundAmount.doubleValue());
         reservation.setReservationStatus(ReservationStatus.CANCELLED);
@@ -94,15 +94,10 @@ public class CancellationService {
 
         if (reservation.getCommission() != null){
             Commission commission = reservation.getCommission();
-            commission.getPayments()
-                    .forEach(payment -> payment.setPaymentStatus(PaymentStatus.CANCELLED));
-
-            if(refundAmount.doubleValue() > 0){
-                Payment payment = new Payment();
-                payment.setCommission(commission);
-                payment.setPaymentStatus(PaymentStatus.PENDING);
-                payment.setAmount(refundAmount.doubleValue());
-                commission.getPayments().add(payment);
+            if (commission.getPayments() != null) {
+                commission.getPayments()
+                        .forEach(payment ->
+                                payment.setPaymentStatus(PaymentStatus.CANCELLED));
             }
         }
 

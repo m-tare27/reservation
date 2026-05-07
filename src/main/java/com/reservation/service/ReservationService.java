@@ -7,7 +7,6 @@ import com.reservation.dto.ReservationResponse;
 import com.reservation.dto.event.ReservationCreationEvent;
 import com.reservation.entity.*;
 import com.reservation.enums.BookingSource;
-import com.reservation.enums.PaymentStatus;
 import com.reservation.enums.ReservationStatus;
 import com.reservation.mapper.Mapper;
 import com.reservation.repository.*;
@@ -20,7 +19,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -30,7 +28,6 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final GuestRepository guestRepository;
-    private final PaymentRepository paymentRepository;
     private final RabbitTemplate rabbitTemplate;
 
 

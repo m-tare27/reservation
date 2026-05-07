@@ -6,8 +6,9 @@ import com.reservation.dto.event.ReservationConfirmedEvent;
 import com.reservation.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 @RequiredArgsConstructor
@@ -16,7 +17,7 @@ public class EmailListener {
     private final EmailService emailService;
 
     @RabbitListener(queues = RabbitConfig.EMAIL_QUEUE)
-    public void handleReservationEmail(ReservationConfirmedEvent event) {
+    public void handleReservationConfirmedEmail(ReservationConfirmedEvent event) {
 
         System.out.println("Sending email to: " + event.getEmail());
 
@@ -28,7 +29,7 @@ public class EmailListener {
         System.out.println("Email successfully sent to: " + event.getEmail());
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleReservationCancelledEmail(ReservationCancelledEvent event){
 
         System.out.println("Sending email to: " + event.getEmail());
