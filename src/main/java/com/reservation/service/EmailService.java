@@ -87,6 +87,38 @@ public class EmailService {
         }
     }
 
+    public void sendReservationCancellationEmail(String to, Integer reservationId) {
+
+        try {
+
+            Reservation reservation = reservationRepository.findById(reservationId)
+                    .orElseThrow(() -> new RuntimeException("Reservation not found with ID: " + reservationId));
+
+            byte[] pdf = generatePdf(reservation);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+            helper.setTo(to);
+            helper.setSubject("Reservation Report");
+            helper.setText("""
+                        <h2>Reservation Cancelled</h2>
+                        <p>Your booking has been successfully cancelled.</p>
+                        <p>Please find your receipt attached.</p>
+                    """, true);
+            helper.setFrom("manastare27@gmail.com");
+            helper.addAttachment(
+                    "reservation_cancellation_" + reservation.getId() + ".pdf",
+                    new ByteArrayResource(pdf)
+            );
+
+            mailSender.send(message);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send email ", e);
+        }
+    }
+
     public byte[] generatePdf(Reservation reservation) throws Exception {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();

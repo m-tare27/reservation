@@ -2,12 +2,14 @@ package com.reservation.service;
 
 import com.reservation.dto.CancellationRequest;
 import com.reservation.dto.CancellationResponse;
+import com.reservation.dto.event.ReservationCancelledEvent;
 import com.reservation.entity.*;
 import com.reservation.repository.CancellationPolicyRepository;
 import com.reservation.repository.CancellationRepository;
 import com.reservation.repository.ReservationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,6 +29,7 @@ public class CancellationService {
     private final ReservationRepository reservationRepository;
     private final CancellationRepository cancellationRepository;
 
+    private final ApplicationEventPublisher eventPublisher;
 
     public CancellationResponse cancelReservation(CancellationRequest request){
         Reservation reservation = reservationRepository.findById(request.getId())
@@ -85,6 +88,14 @@ public class CancellationService {
         reservation.setReservationStatus(ReservationStatus.CANCELLED);
 
         Cancellation savedCancellation = cancellationRepository.save(cancellation);
+
+        eventPublisher.publishEvent(
+                new ReservationCancelledEvent(
+                        reservation.getGuest().getEmail(),
+                        reservation.getGuest().getName(),
+                        reservation.getId()
+                )
+        );
 
         return new CancellationResponse(savedCancellation);
     }
