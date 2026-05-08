@@ -22,7 +22,7 @@ public class RabbitConfig {
             "loyalty.queue";
 
     public static final String RESERVATION_COMPLETED_QUEUE =
-            "reservation_completed_queue";
+            "reservation.completed.queue";
 
     // EXCHANGES
     public static final String RESERVATION_CREATED_EXCHANGE =
