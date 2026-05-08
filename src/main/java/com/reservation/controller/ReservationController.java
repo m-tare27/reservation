@@ -64,4 +64,11 @@ public class ReservationController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping
+    @Operation(summary = "Complete a reservation", description = "Marks the reservation with the specified ID as completed.")
+    public ResponseEntity<Void> completeReservation(@RequestParam Integer reservationId) {
+        reservationService.completeReservation(reservationId);
+        return ResponseEntity.noContent().build();
+    }
+
 }

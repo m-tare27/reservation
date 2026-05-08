@@ -1,6 +1,7 @@
 package com.reservation.service;
 
 import com.reservation.config.RabbitConfig;
+import com.reservation.dto.event.ReservationCompletedEvent;
 import com.reservation.dto.event.ReservationConfirmedEvent;
 import com.reservation.dto.ReservationRequest;
 import com.reservation.dto.ReservationResponse;
@@ -147,6 +148,33 @@ public class ReservationService {
         }
         return convertToResponseList(reservationRepository.findAll());
     }
+
+    public ReservationResponse completeReservation(Integer id) {
+        Reservation reservation = reservationRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Reservation not found"));
+
+        reservation.setReservationStatus(ReservationStatus.COMPLETED);
+        Reservation savedReservation = reservationRepository.save(reservation);
+
+        ReservationCompletedEvent reservationCompletedEvent = new ReservationCompletedEvent(
+                reservation.getId(),
+                null
+        );
+
+        if (reservation.getBookingSource() == BookingSource.TRAVEL_AGENCY) {
+            reservationCompletedEvent.setCommissionId(reservation.getCommission().getId());
+        }
+        rabbitTemplate.convertAndSend(
+                RabbitConfig.RESERVATION_COMPLETED_EXCHANGE,
+                "",
+                reservationCompletedEvent
+        );
+
+        return new ReservationResponse(savedReservation);
+    }
+
         //Helper methods
 
     private List<ReservationResponse> convertToResponseList(List<Reservation> reservations) {

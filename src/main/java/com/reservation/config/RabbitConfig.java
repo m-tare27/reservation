@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfig {
 
-//  QUEUES
+    // QUEUES
     public static final String COMMISSION_QUEUE =
             "commission.queue";
 
@@ -21,12 +21,18 @@ public class RabbitConfig {
     public static final String LOYALTY_QUEUE =
             "loyalty.queue";
 
+    public static final String RESERVATION_COMPLETED_QUEUE =
+            "reservation_completed_queue";
+
+    // EXCHANGES
     public static final String RESERVATION_CREATED_EXCHANGE =
             "reservation.created.exchange";
 
     public static final String RESERVATION_CONFIRMED_EXCHANGE =
             "reservation.confirmed.exchange";
 
+    public static final String RESERVATION_COMPLETED_EXCHANGE =
+            "reservation.completed.exchange";
 
     @Bean
     public Queue commissionQueue() {
@@ -44,6 +50,11 @@ public class RabbitConfig {
     }
 
     @Bean
+    public Queue reservationCompletedQueue() {
+        return new Queue(RESERVATION_COMPLETED_QUEUE);
+    }
+
+    @Bean
     public FanoutExchange reservationCreatedExchange() {
         return new FanoutExchange(
                 RESERVATION_CREATED_EXCHANGE
@@ -54,6 +65,13 @@ public class RabbitConfig {
     public FanoutExchange reservationConfirmedExchange() {
         return new FanoutExchange(
                 RESERVATION_CONFIRMED_EXCHANGE
+        );
+    }
+
+    @Bean
+    public FanoutExchange reservationCompletedExchange() {
+        return new FanoutExchange(
+                RESERVATION_COMPLETED_EXCHANGE
         );
     }
 
@@ -76,6 +94,13 @@ public class RabbitConfig {
         return BindingBuilder
                 .bind(loyaltyQueue())
                 .to(reservationConfirmedExchange());
+    }
+
+    @Bean
+    public Binding reservationCompletedBinding() {
+        return BindingBuilder
+                .bind(reservationCompletedQueue())
+                .to(reservationCompletedExchange());
     }
 
     @Bean

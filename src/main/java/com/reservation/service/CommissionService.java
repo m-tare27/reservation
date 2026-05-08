@@ -3,6 +3,7 @@ package com.reservation.service;
 import com.reservation.entity.Commission;
 import com.reservation.entity.Reservation;
 import com.reservation.entity.TravelAgent;
+import com.reservation.enums.PaymentStatus;
 import com.reservation.repository.CommissionRepository;
 import com.reservation.repository.ReservationRepository;
 import com.reservation.repository.TravelAgentRepository;
@@ -51,5 +52,25 @@ public class CommissionService {
 
             commissionRepository.save(commission);
             reservation.setCommission(commission);
+        }
+
+        public Commission getCommissionByReservationId(Integer reservationId) {
+            return commissionRepository.findByReservationId(reservationId)
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "Commission not found for reservation ID: " + reservationId
+                    ));
+        }
+
+        public void markCommissionPaymentsAsCompleted(Integer commissionId) {
+            Commission commission = commissionRepository.findById(commissionId)
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "Commission not found with ID: " + commissionId
+                    ));
+
+            commission.getPayments()
+                            .forEach(payment -> payment.setPaymentStatus(PaymentStatus.COMPLETED));
+            commissionRepository.save(commission);
         }
 }
