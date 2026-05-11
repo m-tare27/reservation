@@ -4,6 +4,7 @@ import com.reservation.entity.Commission;
 import com.reservation.entity.Reservation;
 import com.reservation.entity.TravelAgent;
 import com.reservation.enums.PaymentStatus;
+import com.reservation.enums.ReservationStatus;
 import com.reservation.repository.CommissionRepository;
 import com.reservation.repository.ReservationRepository;
 import com.reservation.repository.TravelAgentRepository;
@@ -12,6 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Service
 @RequiredArgsConstructor
@@ -37,18 +41,28 @@ public class CommissionService {
                             "Travel Agent not found with ID: " + travelAgentId
                     ));
 
-            Reservation reservation = reservationRepository.findById(reservationId)
+            Reservation reservation = reservationRepository.findByIdForUpdate(reservationId)
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatus.NOT_FOUND,
                             "Reservation not found with ID: " + reservationId
                     ));
 
-            Double commissionAmount = reservation.getTotalAmount() * travelAgent.getCommissionRate()/100;
+            if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Commission can only be created for CONFIRMED reservations"
+                );
+            }
+
+            BigDecimal commissionAmount =
+                    BigDecimal.valueOf(reservation.getTotalAmount())
+                            .multiply(BigDecimal.valueOf(travelAgent.getCommissionRate()))
+                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
             Commission commission = new Commission();
             commission.setReservation(reservation);
             commission.setTravelAgent(travelAgent);
-            commission.setAmount(commissionAmount);
+            commission.setAmount(commissionAmount.doubleValue());
 
             commissionRepository.save(commission);
             reservation.setCommission(commission);
@@ -63,14 +77,56 @@ public class CommissionService {
         }
 
         public void markCommissionPaymentsAsCompleted(Integer commissionId) {
-            Commission commission = commissionRepository.findById(commissionId)
+            Commission commission = commissionRepository.findByIdForUpdate(commissionId)
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatus.NOT_FOUND,
                             "Commission not found with ID: " + commissionId
                     ));
 
-            commission.getPayments()
-                            .forEach(payment -> payment.setPaymentStatus(PaymentStatus.COMPLETED));
+            if (commission.getPayments() != null) {
+                commission.getPayments().forEach(payment -> {
+                    validatePaymentTransition(payment.getPaymentStatus(), PaymentStatus.COMPLETED);
+                    payment.setPaymentStatus(PaymentStatus.COMPLETED);
+                });
+            }
+
             commissionRepository.save(commission);
         }
+
+    private void validatePaymentTransition(
+            PaymentStatus currentStatus,
+            PaymentStatus newStatus
+    ) {
+
+        if (currentStatus == newStatus) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Payment already in status " + newStatus
+            );
+        }
+
+        switch (currentStatus) {
+
+            case PENDING -> {
+                if (newStatus != PaymentStatus.COMPLETED &&
+                        newStatus != PaymentStatus.CANCELLED) {
+
+                    throw new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "Pending payments can only move to COMPLETED or CANCELLED"
+                    );
+                }
+            }
+
+            case CANCELLED -> throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Cancelled payments cannot change state"
+            );
+
+            case COMPLETED -> throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Completed payments cannot change state"
+            );
+        }
+    }
 }
