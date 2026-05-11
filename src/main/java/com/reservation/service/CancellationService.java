@@ -50,13 +50,23 @@ public class CancellationService {
             return new CancellationResponse(existing);
         }
 
+        if (reservation.getReservationStatus() == ReservationStatus.COMPLETED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Completed reservations cannot be cancelled"
+            );
+        }
+
         if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED &&
-                reservation.getReservationStatus() != ReservationStatus.PENDING) {
+                reservation.getReservationStatus() != ReservationStatus.PENDING &&
+                reservation.getReservationStatus() != ReservationStatus.WAITLIST) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Only CONFIRMED or PENDING reservations can be cancelled"
             );
         }
+
+
 
         long daysBeforeCheckIn = ChronoUnit.DAYS.between(LocalDate.now() , reservation.getArrivalDate());
 
@@ -145,7 +155,7 @@ public class CancellationService {
     }
 
     public CancellationResponse updateRefundStatus(Integer id, RefundStatus refundStatus) {
-        Cancellation cancellation = cancellationRepository.findById(id)
+        Cancellation cancellation = cancellationRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "Cancellation with id " + id + " not found"
@@ -169,6 +179,12 @@ public class CancellationService {
             RefundStatus currentStatus,
             RefundStatus newStatus
     ) {
+        if (currentStatus == newStatus) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Refund is already in status " + newStatus
+            );
+        }
 
         switch (currentStatus) {
 
