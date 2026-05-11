@@ -1,19 +1,21 @@
 package com.reservation.processor;
 
 import com.reservation.entity.Reservation;
-import com.reservation.enums.ReservationStatus;
-import org.jspecify.annotations.Nullable;
+import com.reservation.service.ReservationService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+@RequiredArgsConstructor
+public class ReservationItemProcessor
+        implements ItemProcessor<Reservation, Reservation> {
 
-public class ReservationItemProcessor implements ItemProcessor<Reservation , Reservation> {
-    private static final Logger log = LoggerFactory.getLogger(ReservationItemProcessor.class);
+    private final ReservationService reservationService;
+
     @Override
-    public @Nullable Reservation process(Reservation item) throws Exception {
-        item.setReservationStatus(ReservationStatus.EXPIRED);
-        log.info("Moved Reservation {} to EXPIRED",item.getId());
-        return item;
+    public Reservation process(Reservation item) {
+
+        reservationService.expireReservation(item);
+
+        return null;
     }
 }

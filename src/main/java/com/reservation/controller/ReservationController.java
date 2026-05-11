@@ -35,19 +35,19 @@ public class ReservationController {
     @PutMapping("/{id}")
     @Operation(summary = "Update an existing reservation", description = "Updates the reservation with the specified ID using the provided details.")
     public ResponseEntity<ReservationResponse> updateReservation(
-            @Valid @RequestBody ReservationRequest request , @PathVariable Integer id) {
+            @Valid @RequestBody ReservationRequest request, @PathVariable Integer id) {
 
-        ReservationResponse response = reservationService.updateReservation(request , id);
+        ReservationResponse response = reservationService.updateReservation(request, id);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PatchMapping("/{id}/status")
-    @Operation(summary = "Update reservation status", description = "Updates the status of the reservation with the specified ID.")
+    @PatchMapping("/{id}/confirm")
+    @Operation(summary = "Confirm reservation status", description = "Confirms the status of the reservation with the specified ID.")
     public ResponseEntity<Void> updateReservationStatus(
             @PathVariable Integer id,
             @RequestParam ReservationStatus status) {
 
-        reservationService.updateReservationStatus(id, status);
+        reservationService.confirmReservationStatus(id);
         return ResponseEntity.noContent().build();
     }
 

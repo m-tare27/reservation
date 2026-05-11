@@ -11,4 +11,5 @@ public class ReservationCancelledEvent {
     private String email;
     private String guestName;
     private Integer reservationId;
+    private Integer bungalowId;
 }

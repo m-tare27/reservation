@@ -21,7 +21,7 @@ public class JobScheduler{
 
     private final JobService service;
 
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 0 * * * *")
     public void scheduleCancellationRefundReconciliationJob() throws JobInstanceAlreadyCompleteException, InvalidJobParametersException, JobExecutionAlreadyRunningException, JobRestartException {
         log.info("Initiating scheduled refund reconciliation job");
         service.executeCancellationRefundReconciliationJob();

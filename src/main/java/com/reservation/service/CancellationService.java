@@ -105,7 +105,8 @@ public class CancellationService {
                 new ReservationCancelledEvent(
                         reservation.getGuest().getEmail(),
                         reservation.getGuest().getName(),
-                        reservation.getId()
+                        reservation.getId(),
+                        reservation.getBungalowId()
                 )
         );
 

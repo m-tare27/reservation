@@ -6,6 +6,7 @@ import com.reservation.dto.event.ReservationConfirmedEvent;
 import com.reservation.dto.ReservationRequest;
 import com.reservation.dto.ReservationResponse;
 import com.reservation.dto.event.ReservationCreationEvent;
+import com.reservation.dto.event.ReservationExpiredEvent;
 import com.reservation.entity.*;
 import com.reservation.enums.BookingSource;
 import com.reservation.enums.ReservationStatus;
@@ -14,6 +15,8 @@ import com.reservation.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,6 +24,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 
 import java.util.List;
+
+import static com.reservation.specification.ReservationSpecification.*;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +35,7 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final GuestRepository guestRepository;
     private final RabbitTemplate rabbitTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     public ReservationResponse createReservation(ReservationRequest request){
@@ -75,15 +81,15 @@ public class ReservationService {
         return new ReservationResponse(savedReservation);
     }
 
-    public void updateReservationStatus(Integer id, ReservationStatus status){
+    public void confirmReservationStatus(Integer id){
         Reservation reservation = reservationRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Reservation not found"));
 
-        validateReservationUpdate(reservation , status);
+        validateReservationConfirmation(reservation);
 
-        reservation.setReservationStatus(status);
+        reservation.setReservationStatus(ReservationStatus.CONFIRMED);
         reservationRepository.save(reservation);
 
         ReservationConfirmedEvent reservationConfirmedEvent =
@@ -122,31 +128,30 @@ public class ReservationService {
             Integer bungalowId,
             ReservationStatus status,
             LocalDate startDate,
-            LocalDate endDate) {
+            LocalDate endDate
+    ) {
 
-        if (id != null) {
-            return List.of(getReservationById(id));
+        if (startDate != null &&
+                endDate != null &&
+                startDate.isAfter(endDate)) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Start date must be before end date"
+            );
         }
 
-        if (bungalowId != null) {
-            return convertToResponseList(reservationRepository.findByBungalowId(bungalowId));
-        }
+        Specification<Reservation> specification =
+                Specification
+                        .where(hasId(id))
+                        .and(hasBungalowId(bungalowId))
+                        .and(hasStatus(status))
+                        .and(hasDateRange(startDate, endDate));
 
-        if (status != null) {
-            return convertToResponseList(reservationRepository.findByReservationStatus(status));
-        }
-
-        if (startDate != null && endDate != null) {
-            if (startDate.isAfter(endDate)) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Start date must be before end date");
-            }
-            return convertToResponseList(
-                    reservationRepository.findByArrivalDateLessThanEqualAndDepartureDateGreaterThanEqual(
-                            endDate, startDate));
-        }
-        return convertToResponseList(reservationRepository.findAll());
+        return reservationRepository.findAll(specification)
+                .stream()
+                .map(ReservationResponse::new)
+                .toList();
     }
 
     public ReservationResponse completeReservation(Integer id) {
@@ -155,6 +160,11 @@ public class ReservationService {
                         HttpStatus.NOT_FOUND,
                         "Reservation not found"));
 
+        if (reservation.getReservationStatus()
+                != ReservationStatus.CONFIRMED)
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Only confirmed reservations can be completed" );
         reservation.setReservationStatus(ReservationStatus.COMPLETED);
         Reservation savedReservation = reservationRepository.save(reservation);
 
@@ -175,13 +185,27 @@ public class ReservationService {
         return new ReservationResponse(savedReservation);
     }
 
-        //Helper methods
+    public void expireReservation(Reservation item) {
+        if (item.getReservationStatus()
+                != ReservationStatus.PENDING) {
 
-    private List<ReservationResponse> convertToResponseList(List<Reservation> reservations) {
-        return reservations.stream()
-                .map(ReservationResponse::new)
-                .toList();
+            throw new IllegalStateException(
+                    "Only pending reservations can expire"
+            );
+        }
+
+        item.setReservationStatus(ReservationStatus.EXPIRED);
+        reservationRepository.save(item);
+
+        ReservationExpiredEvent reservationExpiredEvent = new ReservationExpiredEvent(
+                item.getId(),
+                item.getBungalowId()
+        );
+
+        eventPublisher.publishEvent(reservationExpiredEvent);
+
     }
+        //Helper methods
 
     public boolean isInvalidReservationDate(LocalDate arrivalDate, LocalDate departureDate) {
         return arrivalDate.isBefore(LocalDate.now()) ||
@@ -204,41 +228,80 @@ public class ReservationService {
         }
     }
 
-    public void validateReservation(Reservation reservation , ReservationRequest request) {
-        if (isInvalidReservationDate(request.getArrivalDate(), request.getDepartureDate())) {
+    public void validateReservation(
+            Reservation reservation,
+            ReservationRequest request
+    ) {
+
+        if (isInvalidReservationDate(
+                request.getArrivalDate(),
+                request.getDepartureDate()
+        )) {
+
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Invalid date range provided");
+                    "Invalid date range provided"
+            );
         }
 
-        boolean exists = reservationRepository.existsOverlappingReservation(reservation.getId() , request.getBungalowId() , request.getArrivalDate() , request.getDepartureDate());
-        if(exists)
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Bungalow is booked for those dates"
-            );
+        if (reservation.getReservationStatus()
+                == ReservationStatus.CONFIRMED) {
 
-        if (reservation.getReservationStatus() == ReservationStatus.CONFIRMED) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Confirmed reservations cannot be updated");
+                    "Confirmed reservations cannot be updated"
+            );
+        }
+
+        boolean occupancyChanged =
+                !reservation.getBungalowId().equals(request.getBungalowId())
+                        || !reservation.getArrivalDate().equals(request.getArrivalDate())
+                        || !reservation.getDepartureDate().equals(request.getDepartureDate());
+
+        boolean shouldValidateOverlap =
+                reservation.getReservationStatus()
+                        != ReservationStatus.WAITLIST
+                        || occupancyChanged;
+
+        if (shouldValidateOverlap) {
+
+            boolean exists =
+                    reservationRepository.existsOverlappingReservation(
+                            reservation.getId(),
+                            request.getBungalowId(),
+                            request.getArrivalDate(),
+                            request.getDepartureDate()
+                    );
+
+            if (exists) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Bungalow is booked for those dates"
+                );
+            }
         }
     }
 
-    public void validateReservationUpdate(Reservation reservation , ReservationStatus status) {
+    public void validateReservationConfirmation(Reservation reservation) {
         ReservationStatus currentStatus = reservation.getReservationStatus();
 
-        switch (currentStatus) {
-            case PENDING, WAITLIST -> {
-                // allowed
-            }
-            default -> throw new ResponseStatusException(
+        if (currentStatus != ReservationStatus.PENDING &&
+                currentStatus != ReservationStatus.WAITLIST) {
+
+            throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Invalid state transition"
+                    "Only pending or waitlisted reservations can be confirmed"
             );
         }
 
-        if (currentStatus == ReservationStatus.WAITLIST && status == ReservationStatus.CONFIRMED) {
+        if (reservation.getArrivalDate().isBefore(LocalDate.now())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Past reservations cannot be confirmed"
+            );
+        }
+
+        if (currentStatus == ReservationStatus.WAITLIST) {
             boolean exists = reservationRepository.existsOverlappingReservation(
                     reservation.getId(),
                     reservation.getBungalowId(),

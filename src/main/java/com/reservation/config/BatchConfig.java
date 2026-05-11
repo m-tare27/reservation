@@ -4,7 +4,9 @@ import com.reservation.entity.Cancellation;
 import com.reservation.entity.Reservation;
 import com.reservation.processor.CancellationItemProcessor;
 import com.reservation.processor.ReservationItemProcessor;
+import com.reservation.service.ReservationService;
 import jakarta.persistence.EntityManagerFactory;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
@@ -16,6 +18,9 @@ import org.springframework.batch.infrastructure.item.database.JpaPagingItemReade
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.orm.jpa.JpaTransactionManager;
+
+import java.time.LocalDateTime;
+import java.util.Map;
 
 @Configuration
 public class BatchConfig {
@@ -70,18 +75,28 @@ public class BatchConfig {
     }
 
     @Bean
+    @StepScope
     public JpaPagingItemReader<Reservation> reservationReader(EntityManagerFactory emf) {
         JpaPagingItemReader<Reservation> reader = new JpaPagingItemReader<>(emf);
         reader.setQueryString(
-                "SELECT r FROM Reservation r WHERE r.reservationStatus = 'PENDING'"
+                "SELECT r FROM Reservation r " +
+                        "WHERE r.reservationStatus = 'PENDING_CONFIRMATION' " +
+                        "AND r.createdAt <= :expiryTime"
         );
+
+        reader.setParameterValues(Map.of(
+                "expiryTime",
+                LocalDateTime.now().minusHours(24)
+        ));
         reader.setPageSize(50);
         return reader;
     }
 
     @Bean
-    public ItemProcessor<Reservation, Reservation> reservationProcessor() {
-        return new ReservationItemProcessor();
+    public ItemProcessor<Reservation, Reservation> reservationProcessor(
+            ReservationService reservationService) {
+
+        return new ReservationItemProcessor(reservationService);
     }
 
     @Bean
