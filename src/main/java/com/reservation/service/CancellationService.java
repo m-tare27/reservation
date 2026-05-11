@@ -144,6 +144,20 @@ public class CancellationService {
         return convertToResponseList(cancellationRepository.findAll());
     }
 
+    public CancellationResponse updateRefundStatus(Integer id, RefundStatus refundStatus) {
+        Cancellation cancellation = cancellationRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Cancellation with id " + id + " not found"
+                ));
+
+        validateRefundStatusTransition(cancellation.getRefundStatus(), refundStatus);
+
+        cancellation.setRefundStatus(refundStatus);
+        Cancellation updatedCancellation = cancellationRepository.save(cancellation);
+        return new CancellationResponse(updatedCancellation);
+    }
+
     //Helper Methods
     private List<CancellationResponse> convertToResponseList(List<Cancellation> cancellations) {
         return cancellations.stream()
@@ -151,14 +165,38 @@ public class CancellationService {
                 .toList();
     }
 
-    public CancellationResponse updateRefundStatus(Integer id, RefundStatus refundStatus) {
-        Cancellation cancellation = cancellationRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Cancellation with id " + id + " not found"
-                ));
-        cancellation.setRefundStatus(refundStatus);
-        Cancellation updatedCancellation = cancellationRepository.save(cancellation);
-        return new CancellationResponse(updatedCancellation);
+    private void validateRefundStatusTransition(
+            RefundStatus currentStatus,
+            RefundStatus newStatus
+    ) {
+
+        switch (currentStatus) {
+
+            case PENDING -> {
+                if (newStatus != RefundStatus.PROCESSED &&
+                        newStatus != RefundStatus.OVERDUE) {
+
+                    throw new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "Pending refunds can only move to PROCESSED or OVERDUE"
+                    );
+                }
+            }
+
+            case OVERDUE -> {
+                if (newStatus != RefundStatus.PROCESSED) {
+
+                    throw new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "Overdue refunds can only move to PROCESSED"
+                    );
+                }
+            }
+
+            case PROCESSED -> throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Processed refunds cannot change state"
+            );
+        }
     }
 }
