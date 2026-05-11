@@ -35,7 +35,7 @@ public class CancellationService {
     private final ApplicationEventPublisher eventPublisher;
 
     public CancellationResponse cancelReservation(CancellationRequest request){
-        Reservation reservation = reservationRepository.findById(request.getId())
+        Reservation reservation = reservationRepository.findByIdForUpdate(request.getId())
                 .orElseThrow(()-> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Invalid reservation id"
