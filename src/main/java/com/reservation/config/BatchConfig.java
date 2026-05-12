@@ -2,6 +2,7 @@ package com.reservation.config;
 
 import com.reservation.entity.Cancellation;
 import com.reservation.entity.Reservation;
+import com.reservation.listener.ReservationWriteListener;
 import com.reservation.processor.CancellationItemProcessor;
 import com.reservation.processor.ReservationItemProcessor;
 import com.reservation.service.ReservationService;
@@ -80,7 +81,7 @@ public class BatchConfig {
         JpaPagingItemReader<Reservation> reader = new JpaPagingItemReader<>(emf);
         reader.setQueryString(
                 "SELECT r FROM Reservation r " +
-                        "WHERE r.reservationStatus = 'PENDING_CONFIRMATION' " +
+                        "WHERE r.reservationStatus = 'PENDING' " +
                         "AND r.createdAt <= :expiryTime"
         );
 
@@ -96,7 +97,7 @@ public class BatchConfig {
     public ItemProcessor<Reservation, Reservation> reservationProcessor(
             ReservationService reservationService) {
 
-        return new ReservationItemProcessor(reservationService);
+        return new ReservationItemProcessor();
     }
 
     @Bean
@@ -118,7 +119,8 @@ public class BatchConfig {
                                 JpaTransactionManager transactionManager,
                                 JpaPagingItemReader<Reservation> reservationReader,
                                 ItemProcessor<Reservation, Reservation> reservationProcessor,
-                                JpaItemWriter<Reservation> reservationWriter) {
+                                JpaItemWriter<Reservation> reservationWriter,
+                                ReservationWriteListener reservationWriteListener) {
 
         return new StepBuilder("reservationStep", jobRepository)
                 .<Reservation, Reservation>chunk(3)
@@ -126,6 +128,7 @@ public class BatchConfig {
                 .reader(reservationReader)
                 .processor(reservationProcessor)
                 .writer(reservationWriter)
+                .listener(reservationWriteListener)
                 .build();
     }
 }

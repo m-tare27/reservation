@@ -1,21 +1,28 @@
 package com.reservation.processor;
 
 import com.reservation.entity.Reservation;
+import com.reservation.enums.ReservationStatus;
 import com.reservation.service.ReservationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 
 @RequiredArgsConstructor
+@Slf4j
 public class ReservationItemProcessor
         implements ItemProcessor<Reservation, Reservation> {
-
-    private final ReservationService reservationService;
 
     @Override
     public Reservation process(Reservation item) {
 
-        reservationService.expireReservation(item);
+        if (item.getReservationStatus() != ReservationStatus.PENDING) {
+            return null;
+        }
 
-        return null;
+        item.setReservationStatus(ReservationStatus.EXPIRED);
+
+        log.info("Marked Reservation {} as EXPIRED", item.getId());
+
+        return item;
     }
 }

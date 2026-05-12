@@ -8,6 +8,8 @@ import org.springframework.batch.core.job.parameters.InvalidJobParametersExcepti
 import org.springframework.batch.core.launch.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.launch.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.launch.JobRestartException;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -17,20 +19,37 @@ import java.text.SimpleDateFormat;
 @RequiredArgsConstructor
 public class JobScheduler{
     private final static Logger log = LoggerFactory.getLogger(JobScheduler.class);
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
 
     private final JobService service;
+
+    private void runRefundJob() throws JobInstanceAlreadyCompleteException, InvalidJobParametersException, JobExecutionAlreadyRunningException, JobRestartException {
+        log.info("Running refund reconciliation job");
+        service.executeCancellationRefundReconciliationJob();
+    }
+
+    private void runExpiryJob() throws JobInstanceAlreadyCompleteException, InvalidJobParametersException, JobExecutionAlreadyRunningException, JobRestartException {
+        log.info("Running reservation expiry job");
+        service.executeReservationExpiryJob();
+    }
 
     @Scheduled(cron = "0 0 * * * *")
     public void scheduleCancellationRefundReconciliationJob() throws JobInstanceAlreadyCompleteException, InvalidJobParametersException, JobExecutionAlreadyRunningException, JobRestartException {
         log.info("Initiating scheduled refund reconciliation job");
-        service.executeCancellationRefundReconciliationJob();
+        runRefundJob();
     }
 
-    @Scheduled(cron = "0 5 0 * * *")
+    @Scheduled(cron = "0 0 * * * *")
     public void scheduleReservationExpiryJob() throws JobInstanceAlreadyCompleteException, InvalidJobParametersException, JobExecutionAlreadyRunningException, JobRestartException {
         log.info("Initiating scheduled reservation expiry job");
-        service.executeReservationExpiryJob();
+        runExpiryJob();
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void runOnStartup() throws JobInstanceAlreadyCompleteException, InvalidJobParametersException, JobExecutionAlreadyRunningException, JobRestartException {
+        log.info("Running jobs on application startup");
+
+        runRefundJob();
+        runExpiryJob();
     }
 
 }

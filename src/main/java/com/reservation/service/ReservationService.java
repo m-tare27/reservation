@@ -115,14 +115,6 @@ public class ReservationService {
                 .toList();
     }
 
-    public ReservationResponse getReservationById(Integer id) {
-        Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Reservation with id " + id + " not found"));
-        return new ReservationResponse(reservation);
-    }
-
     public List<ReservationResponse> getReservations(
             Integer id,
             Integer bungalowId,
