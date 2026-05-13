@@ -25,4 +25,6 @@ public class Availability {
     @Enumerated(EnumType.STRING)
     private AvailabilityStatus status;
 
+    @ManyToOne
+    private Reservation reservation;
 }

@@ -2,13 +2,17 @@ package com.reservation.service;
 
 import com.reservation.dto.BungalowRequest;
 import com.reservation.dto.BungalowResponse;
+import com.reservation.entity.Availability;
 import com.reservation.entity.Bungalow;
+import com.reservation.enums.AvailabilityStatus;
+import com.reservation.repository.AvailabilityRepository;
 import com.reservation.repository.BungalowRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,6 +21,7 @@ import java.util.List;
 public class BungalowService {
 
     private final BungalowRepository bungalowRepository;
+    private final AvailabilityService availabilityService;
 
     public BungalowResponse createBungalow(BungalowRequest request){
         Bungalow bungalow = new Bungalow();
@@ -24,10 +29,10 @@ public class BungalowService {
         bungalow.setName(request.getName());
         bungalow.setDescription(request.getDescription());
         bungalow.setPricePerNight(request.getPricePerNight());
-
         bungalow.setCreatedAt(LocalDateTime.now());
 
         Bungalow savedBungalow = bungalowRepository.save(bungalow);
+        availabilityService.initializeAvailability(savedBungalow);
 
         return new BungalowResponse(savedBungalow);
     }
