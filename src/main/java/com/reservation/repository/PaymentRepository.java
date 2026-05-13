@@ -35,7 +35,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     @Query("""
     SELECT SUM(p.amount)
     FROM Payment p
-    WHERE p.reservation.bungalowId = :bungalowId
+    WHERE p.reservation.bungalow.id = :bungalowId
       AND p.paymentStatus = 'COMPLETED'
 """)
     Double getRevenueByBungalowId(

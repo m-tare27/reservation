@@ -18,47 +18,9 @@ import java.util.Optional;
 public interface ReservationRepository extends
         JpaRepository<Reservation, Integer> , JpaSpecificationExecutor<Reservation> {
 
-    public List<Reservation> findByReservationStatus(ReservationStatus reservationStatus);
-    public List<Reservation> findByBungalowId(Integer id);
-    List<Reservation> findByArrivalDateLessThanEqualAndDepartureDateGreaterThanEqual(
-            LocalDate endDate,
-            LocalDate startDate
-    );
-
-    @Query("""
-    SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END
-    FROM Reservation r
-    WHERE (:excludeId IS NULL OR r.id != :excludeId) AND
-    (r.bungalowId = :bungalowId
-      AND :arrivalDate < r.departureDate
-      AND :departureDate > r.arrivalDate
-      AND r.reservationStatus IN ('PENDING', 'CONFIRMED'))
-      
-""")
-    boolean existsOverlappingReservation(
-            @Param("excludeId") Integer excludeId,
-            @Param("bungalowId") Integer bungalowId,
-            @Param("arrivalDate") LocalDate arrivalDate,
-            @Param("departureDate") LocalDate departureDate
-    );
-
-    @Query("SELECT CASE WHEN EXISTS (" +
-            "SELECT 1 FROM Reservation r " +
-            "WHERE r.bungalowId = (" +
-            "    SELECT res.bungalowId FROM Reservation res WHERE res.id = :reservationId" +
-            ") AND r.reservationStatus = 'CONFIRMED'" +
-            "AND r.id != :reservationId " +
-            "AND r.arrivalDate < :departureDate " +
-            "AND r.departureDate > :arrivalDate" +
-            ") THEN true ELSE false END")
-    boolean existsConfirmedReservationForSameBungalow(
-            @Param("reservationId") Integer reservationId,
-            @Param("arrivalDate") LocalDate arrivalDate,
-            @Param("departureDate") LocalDate departureDate);
-
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT r FROM Reservation r WHERE r.id = :id")
     Optional<Reservation> findByIdForUpdate(@Param("id") Integer id);
 
-    List<Reservation> findByBungalowIdAndReservationStatusOrderByCreatedAtAsc(Integer bungalowId, ReservationStatus reservationStatus);
+    //List<Reservation> findByBungalow_IdAndReservationStatusOrderByCreatedAtAsc(Integer bungalowId, ReservationStatus reservationStatus);
 }

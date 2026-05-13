@@ -72,7 +72,7 @@ public class ExcelService {
 
                 row.createCell(COL_ID).setCellValue(reservation.getId());
                 row.createCell(COL_ARRIVAL_DATE).setCellValue(reservation.getArrivalDate().toString());
-                row.createCell(COL_BUNGALOW_ID).setCellValue(reservation.getBungalowId());
+                //row.createCell(COL_BUNGALOW_ID).setCellValue(reservation.getBungalowId());
                 row.createCell(COL_CREATED_AT).setCellValue(reservation.getCreatedAt().toString());
                 row.createCell(COL_DEPARTURE_DATE).setCellValue(reservation.getDepartureDate().toString());
                 row.createCell(COL_GUEST_NAME).setCellValue(reservation.getGuest().getName());
@@ -150,7 +150,7 @@ public class ExcelService {
         reservation.setCreatedAt(parseDateTime(getCellStringValue(row, COL_CREATED_AT), "created at"));
 
         // Parse numeric values
-        reservation.setBungalowId((int) getCellNumericValue(row, COL_BUNGALOW_ID, "bungalow ID"));
+        //reservation.setBungalowId((int) getCellNumericValue(row, COL_BUNGALOW_ID, "bungalow ID"));
         reservation.setTotalAmount(getCellNumericValue(row, COL_TOTAL_AMOUNT, "total amount"));
 
         // Parse status

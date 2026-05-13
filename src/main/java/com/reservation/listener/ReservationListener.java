@@ -2,10 +2,13 @@ package com.reservation.listener;
 
 import com.reservation.config.RabbitConfig;
 import com.reservation.dto.event.ReservationCreationEvent;
+import com.reservation.enums.ReservationStatus;
+import com.reservation.service.AvailabilityService;
 import com.reservation.service.CommissionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -13,6 +16,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class ReservationListener {
     private final CommissionService commissionService;
+    private final AvailabilityService availabilityService;
 
     @RabbitListener(queues = RabbitConfig.COMMISSION_QUEUE)
     public void handleReservationCreationEvent(ReservationCreationEvent event) {

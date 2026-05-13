@@ -15,35 +15,35 @@ public class WaitlistPromotionService {
 
     private final ReservationRepository reservationRepository;
 
-    @Transactional
-    public void promoteWaitlist(Integer bungalowId) {
-
-        List<Reservation> waitlistedReservations =
-                reservationRepository
-                        .findByBungalowIdAndReservationStatusOrderByCreatedAtAsc(
-                                bungalowId,
-                                ReservationStatus.WAITLIST
-                        );
-
-        for (Reservation reservation : waitlistedReservations) {
-
-            boolean exists =
-                    reservationRepository.existsOverlappingReservation(
-                            reservation.getId(),
-                            reservation.getBungalowId(),
-                            reservation.getArrivalDate(),
-                            reservation.getDepartureDate()
-                    );
-
-            if (!exists) {
-
-                reservation.setReservationStatus(
-                        ReservationStatus.PENDING
-                );
-
-                reservationRepository.save(reservation);
-                break;
-            }
-        }
-    }
+//    @Transactional
+//    public void promoteWaitlist(Integer bungalowId) {
+//
+//        List<Reservation> waitlistedReservations =
+//                reservationRepository
+//                        .findByBungalow_IdAndReservationStatusOrderByCreatedAtAsc(
+//                                bungalowId,
+//                                ReservationStatus.WAITLIST
+//                        );
+//
+//        for (Reservation reservation : waitlistedReservations) {
+//
+////            boolean exists =
+////                    reservationRepository.existsOverlappingReservation(
+////                            reservation.getId(),
+////                            reservation.getBungalowId(),
+////                            reservation.getArrivalDate(),
+////                            reservation.getDepartureDate()
+////                    );
+////
+////            if (!exists) {
+////
+////                reservation.setReservationStatus(
+////                        ReservationStatus.PENDING
+////                );
+////
+////                reservationRepository.save(reservation);
+////                break;
+////            }
+//        }
+//    }
 }

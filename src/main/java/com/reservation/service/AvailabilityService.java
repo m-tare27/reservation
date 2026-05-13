@@ -45,7 +45,7 @@ public class AvailabilityService {
     public void reserveInterval(
             Reservation reservation
     ) {
-        Bungalow bungalow = new Bungalow();
+        Bungalow bungalow = reservation.getBungalow();
         LocalDate start = reservation.getArrivalDate();
         LocalDate end = reservation.getDepartureDate();
 

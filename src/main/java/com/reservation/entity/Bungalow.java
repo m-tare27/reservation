@@ -33,6 +33,6 @@ public class Bungalow {
     @OneToMany(mappedBy = "bungalow")
     private List<Availability> availabilities;
 
-//    @OneToMany(mappedBy = "bungalow")
-//    private List<Reservation> reservations;
+    @OneToMany(mappedBy = "bungalow")
+    private List<Reservation> reservations;
 }

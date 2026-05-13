@@ -31,6 +31,7 @@ public class CancellationService {
     private final CancellationPolicyRepository cancellationPolicyRepository;
     private final ReservationRepository reservationRepository;
     private final CancellationRepository cancellationRepository;
+    private final AvailabilityService availabilityService;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -100,6 +101,7 @@ public class CancellationService {
         cancellation.setRefundAmount(refundAmount.doubleValue());
         reservation.setReservationStatus(ReservationStatus.CANCELLED);
 
+        availabilityService.cancelReservation(reservation);
         Cancellation savedCancellation = cancellationRepository.save(cancellation);
 
         if (reservation.getCommission() != null){
@@ -116,7 +118,7 @@ public class CancellationService {
                         reservation.getGuest().getEmail(),
                         reservation.getGuest().getName(),
                         reservation.getId(),
-                        reservation.getBungalowId()
+                        reservation.getBungalow().getId()
                 )
         );
 

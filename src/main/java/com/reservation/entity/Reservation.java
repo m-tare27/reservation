@@ -17,8 +17,6 @@ public class Reservation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
-    Integer bungalowId;
-
     LocalDate arrivalDate;
 
     LocalDate departureDate;
@@ -46,4 +44,8 @@ public class Reservation {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "commission_id")
     private Commission commission;
+
+    @ManyToOne
+    @JoinColumn(name = "bungalow_id")
+    Bungalow bungalow;
 }

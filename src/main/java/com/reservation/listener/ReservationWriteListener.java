@@ -22,7 +22,7 @@ public class ReservationWriteListener implements ItemWriteListener<Reservation> 
         // your logic
         for (Reservation r : items) {
             publisher.publishEvent(
-                    new ReservationExpiredEvent(r.getId(), r.getBungalowId())
+                    new ReservationExpiredEvent(r.getId(), r.getBungalow().getId())
             );
         }
     }
