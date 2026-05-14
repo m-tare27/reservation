@@ -1,5 +1,6 @@
 package com.reservation.service;
 
+import com.reservation.dto.AvailabilityResponse;
 import com.reservation.dto.BungalowRequest;
 import com.reservation.dto.BungalowResponse;
 import com.reservation.entity.Availability;
@@ -70,6 +71,19 @@ public class BungalowService {
                 ));
 
         return new BungalowResponse(bungalow);
+    }
+
+    public List<AvailabilityResponse> getBungalowAvailabilities(Integer bungalowId){
+        Bungalow bungalow = bungalowRepository.findById(bungalowId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Bungalow not found"
+                ));
+
+        return bungalow.getAvailabilities()
+                .stream()
+                .map(AvailabilityResponse::new)
+                .toList();
     }
 
     // Helper Methods

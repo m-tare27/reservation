@@ -1,5 +1,6 @@
 package com.reservation.controller;
 
+import com.reservation.dto.AvailabilityResponse;
 import com.reservation.dto.BungalowRequest;
 import com.reservation.dto.BungalowResponse;
 import com.reservation.service.BungalowService;
@@ -41,5 +42,10 @@ public class BungalowController {
             @PathVariable Integer bungalowId
     ) {
         return bungalowService.getBungalowById(bungalowId);
+    }
+
+    @GetMapping("/availability/{bungalowId}")
+    public List<AvailabilityResponse> getBungalowAvailability(@PathVariable Integer bungalowId){
+        return bungalowService.getBungalowAvailabilities(bungalowId);
     }
 }

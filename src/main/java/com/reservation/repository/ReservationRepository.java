@@ -22,5 +22,22 @@ public interface ReservationRepository extends
     @Query("SELECT r FROM Reservation r WHERE r.id = :id")
     Optional<Reservation> findByIdForUpdate(@Param("id") Integer id);
 
-    //List<Reservation> findByBungalow_IdAndReservationStatusOrderByCreatedAtAsc(Integer bungalowId, ReservationStatus reservationStatus);
+    List<Reservation> findByBungalow_IdAndReservationStatusOrderByCreatedAtAsc(Integer bungalowId, ReservationStatus reservationStatus);
+
+    @Query("""
+    SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END
+    FROM Reservation r
+    WHERE (:excludeId IS NULL OR r.id != :excludeId) AND
+    (r.bungalow.id = :bungalowId
+      AND :arrivalDate < r.departureDate
+      AND :departureDate > r.arrivalDate
+      AND r.reservationStatus IN ('PENDING', 'CONFIRMED'))
+      
+""")
+    boolean existsOverlappingReservation(
+            @Param("excludeId") Integer excludeId,
+            @Param("bungalowId") Integer bungalowId,
+            @Param("arrivalDate") LocalDate arrivalDate,
+            @Param("departureDate") LocalDate departureDate
+    );
 }

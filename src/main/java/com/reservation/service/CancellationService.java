@@ -63,7 +63,7 @@ public class CancellationService {
                 reservation.getReservationStatus() != ReservationStatus.WAITLIST) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Only CONFIRMED or PENDING reservations can be cancelled"
+                    "Only CONFIRMED or PENDING or WAITLIST reservations can be cancelled"
             );
         }
 
@@ -99,9 +99,12 @@ public class CancellationService {
                 .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
         cancellation.setRefundAmount(refundAmount.doubleValue());
+
+        if(reservation.getReservationStatus()!=ReservationStatus.WAITLIST)
+            availabilityService.cancelReservation(reservation);
+
         reservation.setReservationStatus(ReservationStatus.CANCELLED);
 
-        availabilityService.cancelReservation(reservation);
         Cancellation savedCancellation = cancellationRepository.save(cancellation);
 
         if (reservation.getCommission() != null){

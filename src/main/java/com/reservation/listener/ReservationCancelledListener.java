@@ -12,8 +12,8 @@ import org.springframework.stereotype.Component;
 public class ReservationCancelledListener {
 
     private final WaitlistPromotionService waitlistPromotionService;
-//    @EventListener
-//    public void handleReservationCancelledEvent(ReservationCancelledEvent event) {
-//        waitlistPromotionService.promoteWaitlist(event.getBungalowId());
-//    }
+    @EventListener
+    public void handleReservationCancelledEvent(ReservationCancelledEvent event) {
+        waitlistPromotionService.promoteWaitlist(event.getBungalowId());
+    }
 }
