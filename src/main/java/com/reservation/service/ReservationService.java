@@ -21,8 +21,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static com.reservation.specification.ReservationSpecification.*;
@@ -53,8 +55,16 @@ public class ReservationService {
                         HttpStatus.NOT_FOUND,
                         "Bungalow with Id " + request.getBungalowId() + " not found"));
 
+        long nights = ChronoUnit.DAYS.between(
+                request.getArrivalDate(),
+                request.getDepartureDate()
+        );
+
+        BigDecimal totalAmount = bungalow.getPricePerNight()
+                .multiply(BigDecimal.valueOf(nights));
+
         Reservation reservation = new Reservation();
-        Mapper.mapRequestToEntity(reservation , request , guest , bungalow);
+        Mapper.mapRequestToEntity(reservation , request , guest , bungalow , totalAmount.doubleValue());
 
         boolean available = availabilityRepository.findAvailableInterval(request.getBungalowId() , request.getArrivalDate() , request.getDepartureDate()).isPresent();
         reservation.setReservationStatus(available ? ReservationStatus.PENDING : ReservationStatus.WAITLIST);
@@ -86,7 +96,7 @@ public class ReservationService {
 
         validateReservation(reservation , request);
 
-        Mapper.mapRequestToEntity(reservation , request , reservation.getGuest() , reservation.getBungalow());
+        Mapper.mapRequestToEntity(reservation , request , reservation.getGuest() , reservation.getBungalow() , reservation.getTotalAmount());
         Reservation savedReservation = reservationRepository.save(reservation);
 
         return new ReservationResponse(savedReservation);
@@ -266,23 +276,23 @@ public class ReservationService {
                         != ReservationStatus.WAITLIST
                         || occupancyChanged;
 
-//        if (shouldValidateOverlap) {
-//
-//            boolean exists =
-//                    reservationRepository.existsOverlappingReservation(
-//                            reservation.getId(),
-//                            request.getBungalowId(),
-//                            request.getArrivalDate(),
-//                            request.getDepartureDate()
-//                    );
-//
-//            if (exists) {
-//                throw new ResponseStatusException(
-//                        HttpStatus.BAD_REQUEST,
-//                        "Bungalow is booked for those dates"
-//                );
-//            }
-//        }
+        if (shouldValidateOverlap) {
+
+            boolean exists =
+                    reservationRepository.existsOverlappingReservation(
+                            reservation.getId(),
+                            request.getBungalowId(),
+                            request.getArrivalDate(),
+                            request.getDepartureDate()
+                    );
+
+            if (exists) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Bungalow is booked for those dates"
+                );
+            }
+        }
     }
 
     public void validateReservationConfirmation(Reservation reservation) {
@@ -304,20 +314,20 @@ public class ReservationService {
             );
         }
 
-//        if (currentStatus == ReservationStatus.WAITLIST) {
-//            boolean exists = reservationRepository.existsOverlappingReservation(
-//                    reservation.getId(),
-//                    reservation.getBungalowId(),
-//                    reservation.getArrivalDate(),
-//                    reservation.getDepartureDate()
-//            );
-//
-//            if (exists) {
-//                throw new ResponseStatusException(
-//                        HttpStatus.CONFLICT,
-//                        "Cannot confirm due to overlapping reservation"
-//                );
-//            }
-//        }
+        if (currentStatus == ReservationStatus.WAITLIST) {
+            boolean exists = reservationRepository.existsOverlappingReservation(
+                    reservation.getId(),
+                    reservation.getBungalow().getId(),
+                    reservation.getArrivalDate(),
+                    reservation.getDepartureDate()
+            );
+
+            if (exists) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Cannot confirm due to overlapping reservation"
+                );
+            }
+        }
     }
 }

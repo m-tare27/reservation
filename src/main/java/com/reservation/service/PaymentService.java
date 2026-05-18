@@ -5,6 +5,7 @@ import com.reservation.dto.PaymentResponse;
 import com.reservation.entity.Payment;
 import com.reservation.enums.PaymentStatus;
 import com.reservation.entity.Reservation;
+import com.reservation.enums.ReservationStatus;
 import com.reservation.repository.PaymentRepository;
 import com.reservation.repository.ReservationRepository;
 import jakarta.transaction.Transactional;

@@ -1,11 +1,13 @@
 package com.reservation.service;
 
 import com.reservation.entity.Commission;
+import com.reservation.entity.Payment;
 import com.reservation.entity.Reservation;
 import com.reservation.entity.TravelAgent;
 import com.reservation.enums.PaymentStatus;
 import com.reservation.enums.ReservationStatus;
 import com.reservation.repository.CommissionRepository;
+import com.reservation.repository.PaymentRepository;
 import com.reservation.repository.ReservationRepository;
 import com.reservation.repository.TravelAgentRepository;
 import jakarta.transaction.Transactional;
@@ -25,6 +27,7 @@ public class CommissionService {
     private final CommissionRepository commissionRepository;
     private final ReservationRepository reservationRepository;
     private final TravelAgentRepository travelAgentRepository;
+    private final PaymentRepository paymentRepository;
 
         public void createCommissionForReservation(Integer reservationId , Integer travelAgentId) {
 
@@ -47,12 +50,12 @@ public class CommissionService {
                             "Reservation not found with ID: " + reservationId
                     ));
 
-            if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Commission can only be created for CONFIRMED reservations"
-                );
-            }
+//            if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
+//                throw new ResponseStatusException(
+//                        HttpStatus.BAD_REQUEST,
+//                        "Commission can only be created for CONFIRMED reservations"
+//                );
+//            }
 
             BigDecimal commissionAmount =
                     BigDecimal.valueOf(reservation.getTotalAmount())
@@ -64,8 +67,15 @@ public class CommissionService {
             commission.setTravelAgent(travelAgent);
             commission.setAmount(commissionAmount.doubleValue());
 
-            commissionRepository.save(commission);
-            reservation.setCommission(commission);
+            Commission savedCommission = commissionRepository.save(commission);
+            Payment payment = new Payment();
+
+            payment.setCommission(savedCommission);
+            payment.setAmount(savedCommission.getAmount());
+            payment.setPaymentStatus(PaymentStatus.PENDING);
+            paymentRepository.save(payment);
+            
+            reservation.setCommission(savedCommission);
         }
 
         public Commission getCommissionByReservationId(Integer reservationId) {

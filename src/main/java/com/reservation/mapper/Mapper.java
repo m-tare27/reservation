@@ -18,12 +18,12 @@ public class Mapper {
         cancellationPolicy.setRefundPercentage(policy.getRefundPercentage());
     }
 
-    public static void mapRequestToEntity(Reservation reservation, ReservationRequest request, Guest guest, Bungalow bungalow) {
+    public static void mapRequestToEntity(Reservation reservation, ReservationRequest request, Guest guest, Bungalow bungalow , double totalAmount) {
         reservation.setGuest(guest);
         reservation.setBungalow(bungalow);
         reservation.setArrivalDate(request.getArrivalDate());
         reservation.setDepartureDate(request.getDepartureDate());
-        reservation.setTotalAmount(request.getTotalAmount());
+        reservation.setTotalAmount(totalAmount);
         reservation.setBookingSource(request.getBookingSource());
         reservation.setCreatedAt(LocalDateTime.now());
     }

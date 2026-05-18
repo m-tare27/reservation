@@ -25,10 +25,6 @@ public class ReservationRequest {
     @Future(message = "Departure date must be in the future")
     private LocalDate departureDate;
 
-    @NotNull(message = "Total amount is required")
-    @Positive(message = "Total amount must be greater than 0")
-    private double totalAmount;
-
     private BookingSource bookingSource;
 
     private Integer travelAgentId;
