@@ -311,19 +311,6 @@ The application includes validation for:
 
 ---
 
-## Future Improvements
-
-* JWT Authentication & Authorization
-* Role-based access control
-* Real payment gateway integration
-* Notification service
-* Dockerization
-* CI/CD pipeline
-* Unit & integration test coverage
-* Kubernetes deployment
-
----
-
 ## Dependencies
 
 Key dependencies used:
