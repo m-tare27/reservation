@@ -165,7 +165,7 @@ http://localhost:8080/v3/api-docs
 ### Clone Repository
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/m-tare27/reservation.git
 cd reservation-system
 ```
 
