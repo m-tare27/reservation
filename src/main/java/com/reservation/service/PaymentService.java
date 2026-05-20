@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +25,10 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final ReservationRepository reservationRepository;
     private static final double TOLERANCE = 0.01;
+    private static final Set<ReservationStatus> PAYABLE_STATUSES = Set.of(
+            ReservationStatus.PENDING,
+            ReservationStatus.CONFIRMED
+    );
 
     public PaymentResponse processPayment(PaymentRequest request) {
 
@@ -34,7 +39,15 @@ public class PaymentService {
                         HttpStatus.NOT_FOUND,
                         "Reservation with id " + request.getReservationId() + " not found"));
 
-        Double totalPaid = paymentRepository.sumCompletedPaymentsByReservationId(reservation.getId());
+        if (!PAYABLE_STATUSES.contains(reservation.getReservationStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Payment cannot be processed for reservation status: "
+                            + reservation.getReservationStatus()
+            );
+        }
+
+        Double totalPaid = paymentRepository.sumPaymentsByReservationId(reservation.getId());
         if (totalPaid == null) totalPaid = 0.0;
 
         if (totalPaid + request.getAmount() > reservation.getTotalAmount() + TOLERANCE) {
@@ -48,7 +61,7 @@ public class PaymentService {
         Payment payment = new Payment();
         payment.setAmount(request.getAmount());
         payment.setReservation(reservation);
-        payment.setPaymentStatus(PaymentStatus.PENDING);
+        payment.setPaymentStatus(PaymentStatus.COMPLETED);
 
         Payment savedPayment = paymentRepository.save(payment);
         return new PaymentResponse(savedPayment);
@@ -63,89 +76,19 @@ public class PaymentService {
         return new PaymentResponse(payment);
     }
 
-    public PaymentResponse completePayment(Integer paymentId) {
-
-        Payment payment = paymentRepository.findById(paymentId)
+    public void refundPayment(Integer reservationId) {
+        Reservation reservation = reservationRepository.findByIdForUpdate(reservationId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Payment with id " + paymentId + " not found"));
+                        "Reservation with id " + reservationId + " not found"));
 
-        Reservation reservation = reservationRepository
-                .findByIdForUpdate(payment.getReservation().getId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Reservation not found"));
+        Double refundAmount = reservation.getCancellation().getRefundAmount();
 
-        switch (payment.getPaymentStatus()) {
-
-            case PENDING -> {
-                Double totalPaid = paymentRepository
-                        .sumCompletedPaymentsByReservationId(reservation.getId());
-
-                if (totalPaid == null) totalPaid = 0.0;
-
-                if (totalPaid + payment.getAmount() > reservation.getTotalAmount() + TOLERANCE) {
-                    throw new ResponseStatusException(
-                            HttpStatus.BAD_REQUEST,
-                            "Completing this payment would exceed total amount");
-                }
-
-                payment.setPaymentStatus(PaymentStatus.COMPLETED);
-            }
-
-            case COMPLETED -> throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Payment is already completed");
-
-            case REFUNDED -> throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Refunded payments cannot be completed");
-
-            case FAILED -> throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Failed payments cannot be completed");
-        }
-
-        Payment savedPayment = paymentRepository.save(payment);
-
-        Double totalPaid = paymentRepository
-                .sumCompletedPaymentsByReservationId(reservation.getId());
-
-        if (totalPaid == null) totalPaid = 0.0;
-
-        if (totalPaid >= reservation.getTotalAmount() - TOLERANCE) {
-                paymentRepository.findByReservationIdAndStatus(reservation.getId(), PaymentStatus.PENDING)
-                        .forEach(p -> {
-                            p.setPaymentStatus(PaymentStatus.CANCELLED);
-                            paymentRepository.save(p);
-                        });
-            }
-
-        return new PaymentResponse(savedPayment);
-    }
-
-    public PaymentResponse refundPayment(Integer paymentId) {
-
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Payment with id " + paymentId + " not found"));
-
-        switch (payment.getPaymentStatus()) {
-
-            case COMPLETED -> payment.setPaymentStatus(PaymentStatus.REFUNDED);
-
-            case PENDING, FAILED , CANCELLED -> throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Only completed payments can be refunded");
-
-            case REFUNDED -> throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Payment already refunded");
-        }
-        Payment savedPayment = paymentRepository.save(payment);
-
-        return new PaymentResponse(savedPayment);
+        Payment payment = new Payment();
+        payment.setPaymentStatus(PaymentStatus.REFUNDED);
+        payment.setAmount(refundAmount);
+        payment.setReservation(reservation);
+        paymentRepository.save(payment);
     }
 
     public List<PaymentResponse> getPaymentsByReservationId(Integer reservationId) {
@@ -155,53 +98,54 @@ public class PaymentService {
                 .toList();
     }
 
-    public PaymentResponse failPayment(Integer paymentId) {
-
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Payment not found"));
-
-        if (payment.getPaymentStatus() != PaymentStatus.PENDING) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Only pending payments can fail");
-        }
-
-        payment.setPaymentStatus(PaymentStatus.FAILED);
-        return new PaymentResponse(paymentRepository.save(payment));
-    }
-
     public Double getRevenueByBungalowId(Integer bungalowId) {
         Double revenue = paymentRepository.getRevenueByBungalowId(bungalowId);
         return revenue != null ? revenue : 0.0;
     }
 
+    public void cancelPayments(Integer reservationId){
+        List<Payment> payments = paymentRepository.findByReservationId(reservationId);
+        payments.forEach(
+                payment -> payment.setPaymentStatus(PaymentStatus.CANCELLED)
+        );
+    }
+
     //Helper Methods
 
+    private static final double MAX_PAYMENT_AMOUNT = 1_000_000;
+
     private void validatePaymentRequest(PaymentRequest request) {
+
         if (request == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Payment request is required");
+                    "Payment request is required"
+            );
         }
 
-        if (request.getReservationId() == null || request.getReservationId() <= 0) {
+        if (request.getReservationId() == null ||
+                request.getReservationId() <= 0) {
+
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Valid reservation ID is required");
+                    "Valid reservation ID is required"
+            );
         }
 
-        if (request.getAmount() == null || request.getAmount() <= 0) {
+        if (request.getAmount() == null ||
+                request.getAmount() <= 0) {
+
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Payment amount must be greater than 0");
+                    "Payment amount must be greater than 0"
+            );
         }
 
-        if (request.getAmount() > 1_000_000) {
+        if (request.getAmount() > MAX_PAYMENT_AMOUNT) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Payment amount exceeds maximum allowed");
+                    "Payment amount exceeds maximum allowed"
+            );
         }
     }
 }

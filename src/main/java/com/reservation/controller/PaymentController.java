@@ -44,27 +44,6 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/{paymentId}/complete")
-    @Operation(summary = "Complete a payment", description = "Marks the payment with the specified ID as completed.")
-    public ResponseEntity<PaymentResponse> completePayment(@PathVariable Integer paymentId) {
-        PaymentResponse response = paymentService.completePayment(paymentId);
-        return ResponseEntity.ok(response);
-    }
-
-    @PatchMapping("/{paymentId}/refund")
-    @Operation(summary = "Refund a payment", description = "Marks the payment with the specified ID as refunded.")
-    public ResponseEntity<PaymentResponse> refundPayment(@PathVariable Integer paymentId) {
-        PaymentResponse response = paymentService.refundPayment(paymentId);
-        return ResponseEntity.ok(response);
-    }
-
-    @PatchMapping("/{paymentId}/fail")
-    @Operation(summary = "Fail a payment", description = "Marks the payment with the specified ID as failed.")
-    public ResponseEntity<PaymentResponse> failPayment(@PathVariable Integer paymentId) {
-        PaymentResponse response = paymentService.failPayment(paymentId);
-        return ResponseEntity.ok(response);
-    }
-
     @GetMapping("/bungalow/{bungalowId}/revenue")
     @Operation(summary = "Get revenue by bungalow ID", description = "Retrieves the total revenue generated from payments associated with a specific bungalow ID.")
     public ResponseEntity<Double> getRevenueByBungalowId(@PathVariable Integer bungalowId) {

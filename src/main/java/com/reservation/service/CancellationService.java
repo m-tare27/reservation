@@ -35,6 +35,7 @@ public class CancellationService {
 
     private final ApplicationEventPublisher eventPublisher;
 
+    @Transactional
     public CancellationResponse cancelReservation(CancellationRequest request){
         Reservation reservation = reservationRepository.findByIdForUpdate(request.getId())
                 .orElseThrow(()-> new ResponseStatusException(
@@ -86,6 +87,8 @@ public class CancellationService {
 
         Cancellation cancellation = new Cancellation();
         cancellation.setReservation(reservation);
+//        reservation.setCancellation(cancellation);
+
         cancellation.setCancellationPolicy(policy);
         cancellation.setDaysBeforeCheckIn(daysBeforeCheckIn);
         cancellation.setCancelledAt(LocalDateTime.now());
@@ -104,8 +107,7 @@ public class CancellationService {
             availabilityService.cancelReservation(reservation);
 
         reservation.setReservationStatus(ReservationStatus.CANCELLED);
-
-        Cancellation savedCancellation = cancellationRepository.save(cancellation);
+        Cancellation savedCancellation = cancellationRepository.save(cancellation);;
 
         if (reservation.getCommission() != null){
             Commission commission = reservation.getCommission();

@@ -17,7 +17,7 @@ public class Cancellation {
 
     long daysBeforeCheckIn;
 
-    double refundAmount;
+    Double refundAmount;
 
     @Enumerated(EnumType.STRING)
     RefundStatus refundStatus;
