@@ -2,12 +2,15 @@ package com.reservation.entity;
 
 import com.reservation.enums.RefundStatus;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Cancellation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

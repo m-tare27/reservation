@@ -2,10 +2,13 @@ package com.reservation.entity;
 
 import com.reservation.enums.PaymentStatus;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 @Entity
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Payment {
 
     @Id

@@ -2,12 +2,15 @@ package com.reservation.entity;
 
 import com.reservation.enums.AvailabilityStatus;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDate;
 
 @Entity
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Availability {
 
     @Id

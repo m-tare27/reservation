@@ -3,14 +3,17 @@ package com.reservation.entity;
 import com.reservation.enums.BookingSource;
 import com.reservation.enums.ReservationStatus;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Reservation {
 
     @Id
