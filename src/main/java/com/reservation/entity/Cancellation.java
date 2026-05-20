@@ -4,6 +4,7 @@ import com.reservation.enums.RefundStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,7 +21,8 @@ public class Cancellation {
 
     long daysBeforeCheckIn;
 
-    Double refundAmount;
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal refundAmount;
 
     @Enumerated(EnumType.STRING)
     RefundStatus refundStatus;

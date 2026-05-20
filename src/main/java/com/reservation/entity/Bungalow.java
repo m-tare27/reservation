@@ -23,7 +23,7 @@ public class Bungalow {
 
     private String description;
 
-    @Column(precision = 10, scale = 2)
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal pricePerNight;
 
     private LocalDateTime createdAt;
