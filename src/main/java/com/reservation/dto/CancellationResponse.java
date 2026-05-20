@@ -4,6 +4,7 @@ import com.reservation.entity.Cancellation;
 import com.reservation.enums.RefundStatus;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -15,7 +16,7 @@ public class CancellationResponse {
 
     long daysBeforeCheckIn;
 
-    double refundAmount;
+    BigDecimal refundAmount;
 
     RefundStatus refundStatus;
 

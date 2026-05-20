@@ -4,6 +4,7 @@ import com.reservation.entity.Reservation;
 import com.reservation.enums.ReservationStatus;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -20,7 +21,7 @@ public class ReservationResponse {
 
     private LocalDate departureDate;
 
-    private double totalAmount;
+    private BigDecimal totalAmount;
 
     private ReservationStatus reservationStatus;
 

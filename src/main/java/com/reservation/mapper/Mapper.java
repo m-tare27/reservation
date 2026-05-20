@@ -7,6 +7,7 @@ import com.reservation.entity.CancellationPolicy;
 import com.reservation.entity.Guest;
 import com.reservation.entity.Reservation;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class Mapper {
@@ -18,7 +19,7 @@ public class Mapper {
         cancellationPolicy.setRefundPercentage(policy.getRefundPercentage());
     }
 
-    public static void mapRequestToEntity(Reservation reservation, ReservationRequest request, Guest guest, Bungalow bungalow , double totalAmount) {
+    public static void mapRequestToEntity(Reservation reservation, ReservationRequest request, Guest guest, Bungalow bungalow , BigDecimal totalAmount) {
         reservation.setGuest(guest);
         reservation.setBungalow(bungalow);
         reservation.setArrivalDate(request.getArrivalDate());
