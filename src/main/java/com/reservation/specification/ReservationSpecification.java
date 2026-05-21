@@ -14,10 +14,17 @@ public class ReservationSpecification {
                         cb.equal(root.get("id"), id);
     }
 
-    public static Specification<Reservation> hasBungalowId(Integer bungalowId) {
+    public static Specification<Reservation> hasBungalowId(
+            Integer bungalowId
+    ) {
+
         return (root, query, cb) ->
-                bungalowId == null ? null :
-                        cb.equal(root.get("bungalowId"), bungalowId);
+                bungalowId == null
+                        ? null
+                        : cb.equal(
+                        root.get("bungalow").get("id"),
+                        bungalowId
+                );
     }
 
     public static Specification<Reservation> hasStatus(
@@ -50,5 +57,18 @@ public class ReservationSpecification {
                     )
             );
         };
+    }
+
+    public static Specification<Reservation> hasGuestId(
+            Integer guestId
+    ) {
+
+        return (root, query, cb) ->
+                guestId == null
+                        ? null
+                        : cb.equal(
+                        root.get("guest").get("id"),
+                        guestId
+                );
     }
 }

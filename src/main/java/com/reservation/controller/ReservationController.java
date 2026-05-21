@@ -32,21 +32,9 @@ public class ReservationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Update an existing reservation", description = "Updates the reservation with the specified ID using the provided details.")
-    public ResponseEntity<ReservationResponse> updateReservation(
-            @Valid @RequestBody ReservationRequest request, @PathVariable Integer id) {
-
-        ReservationResponse response = reservationService.updateReservation(request, id);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
     @PatchMapping("/{id}/confirm")
     @Operation(summary = "Confirm reservation status", description = "Confirms the status of the reservation with the specified ID.")
-    public ResponseEntity<Void> updateReservationStatus(
-            @PathVariable Integer id,
-            @RequestParam ReservationStatus status) {
-
+    public ResponseEntity<Void> updateReservationStatus(@PathVariable Integer id) {
         reservationService.confirmReservationStatus(id);
         return ResponseEntity.noContent().build();
     }
@@ -58,16 +46,17 @@ public class ReservationController {
             @RequestParam(required = false) Integer bungalowId,
             @RequestParam(required = false) ReservationStatus status,
             @RequestParam(required = false) LocalDate startDate,
-            @RequestParam(required = false) LocalDate endDate) {
+            @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(required = false) Integer guestId) {
 
-        List<ReservationResponse> response = reservationService.getReservations(id, bungalowId, status, startDate, endDate);
+        List<ReservationResponse> response = reservationService.getReservations(id, bungalowId, guestId , status, startDate, endDate);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/complete")
     @Operation(summary = "Complete a reservation", description = "Marks the reservation with the specified ID as completed.")
-    public ResponseEntity<Void> completeReservation(@RequestParam Integer reservationId) {
-        reservationService.completeReservation(reservationId);
+    public ResponseEntity<Void> completeReservationStatus(@PathVariable Integer id) {
+        reservationService.completeReservation(id);
         return ResponseEntity.noContent().build();
     }
 

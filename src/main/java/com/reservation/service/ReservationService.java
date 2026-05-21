@@ -139,6 +139,7 @@ public class ReservationService {
     public List<ReservationResponse> getReservations(
             Integer id,
             Integer bungalowId,
+            Integer guestId,
             ReservationStatus status,
             LocalDate startDate,
             LocalDate endDate
@@ -158,6 +159,7 @@ public class ReservationService {
                 Specification
                         .where(hasId(id))
                         .and(hasBungalowId(bungalowId))
+                        .and(hasGuestId(guestId))
                         .and(hasStatus(status))
                         .and(hasDateRange(startDate, endDate));
 
