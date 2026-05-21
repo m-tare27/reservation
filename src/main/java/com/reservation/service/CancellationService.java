@@ -95,13 +95,13 @@ public class CancellationService {
         cancellation.setRefundStatus(RefundStatus.PENDING);
         cancellation.setReason(request.getReason());
 
-        BigDecimal totalAmount = BigDecimal.valueOf(reservation.getTotalAmount());
+        BigDecimal totalAmount = reservation.getTotalAmount();
         BigDecimal refundPercentage = BigDecimal.valueOf(policy.getRefundPercentage());
         BigDecimal refundAmount = totalAmount
                 .multiply(refundPercentage)
                 .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
-        cancellation.setRefundAmount(refundAmount.doubleValue());
+        cancellation.setRefundAmount(refundAmount);
 
         if(reservation.getReservationStatus()!=ReservationStatus.WAITLIST)
             availabilityService.cancelReservation(reservation);

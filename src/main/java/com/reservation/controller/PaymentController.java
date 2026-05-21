@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -46,8 +47,8 @@ public class PaymentController {
 
     @GetMapping("/bungalow/{bungalowId}/revenue")
     @Operation(summary = "Get revenue by bungalow ID", description = "Retrieves the total revenue generated from payments associated with a specific bungalow ID.")
-    public ResponseEntity<Double> getRevenueByBungalowId(@PathVariable Integer bungalowId) {
-        Double revenue = paymentService.getRevenueByBungalowId(bungalowId);
+    public ResponseEntity<BigDecimal> getRevenueByBungalowId(@PathVariable Integer bungalowId) {
+        BigDecimal revenue = paymentService.getRevenueByBungalowId(bungalowId);
         return ResponseEntity.ok(revenue);
     }
 }

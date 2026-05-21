@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -84,13 +85,13 @@ public class GuestService {
                 .toList();
     }
 
-    public void addLoyaltyPoints(Integer guestId , Double totalAmount) {
+    public void addLoyaltyPoints(Integer guestId , BigDecimal totalAmount) {
         Guest guest = guestRepository.findById(guestId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Guest with id " + guestId + " not found"));
 
-        int pointsToAdd = (int) (totalAmount / 10);
+        int pointsToAdd = totalAmount.divide(BigDecimal.TEN).intValue();
         guest.setLoyaltyPoints(
                 guest.getLoyaltyPoints() + pointsToAdd
         );

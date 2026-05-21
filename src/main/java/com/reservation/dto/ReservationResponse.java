@@ -13,7 +13,7 @@ public class ReservationResponse {
 
     private Integer reservationId;
 
-    private BungalowResponse bungalowResponse;
+    private BungalowReservationResponse bungalowReservationResponse;
 
     private GuestReservationResponse guest;
 
@@ -29,7 +29,7 @@ public class ReservationResponse {
 
     public ReservationResponse(Reservation reservation) {
         this.reservationId = reservation.getId();
-        this.bungalowResponse = new BungalowResponse(reservation.getBungalow());
+        this.bungalowReservationResponse = new BungalowReservationResponse(reservation.getBungalow());
         this.guest = new GuestReservationResponse(reservation.getGuest());
         this.arrivalDate = reservation.getArrivalDate();
         this.departureDate = reservation.getDepartureDate();

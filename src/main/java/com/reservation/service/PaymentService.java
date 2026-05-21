@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
@@ -24,7 +25,11 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final ReservationRepository reservationRepository;
-    private static final double TOLERANCE = 0.01;
+    private static final BigDecimal TOLERANCE =
+            new BigDecimal("0.01");
+    private static final BigDecimal MAX_PAYMENT_AMOUNT =
+            new BigDecimal("100000.00");
+
     private static final Set<ReservationStatus> PAYABLE_STATUSES = Set.of(
             ReservationStatus.PENDING,
             ReservationStatus.CONFIRMED
@@ -47,15 +52,28 @@ public class PaymentService {
             );
         }
 
-        Double totalPaid = paymentRepository.sumPaymentsByReservationId(reservation.getId());
-        if (totalPaid == null) totalPaid = 0.0;
+        BigDecimal totalPaid =
+                paymentRepository.sumPaymentsByReservationId(reservation.getId());
 
-        if (totalPaid + request.getAmount() > reservation.getTotalAmount() + TOLERANCE) {
+        BigDecimal updatedTotal =
+                totalPaid.add(request.getAmount());
+
+        BigDecimal allowedTotal =
+                reservation.getTotalAmount().add(TOLERANCE);
+
+        if (updatedTotal.compareTo(allowedTotal) > 0) {
+
+            BigDecimal remainingBalance =
+                    reservation.getTotalAmount().subtract(totalPaid);
+
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    String.format("Payment amount %.2f exceeds remaining balance %.2f",
+                    String.format(
+                            "Payment amount %s exceeds remaining balance %s",
                             request.getAmount(),
-                            reservation.getTotalAmount() - totalPaid));
+                            remainingBalance
+                    )
+            );
         }
 
         Payment payment = new Payment();
@@ -64,6 +82,7 @@ public class PaymentService {
         payment.setPaymentStatus(PaymentStatus.COMPLETED);
 
         Payment savedPayment = paymentRepository.save(payment);
+
         return new PaymentResponse(savedPayment);
     }
 
@@ -82,7 +101,7 @@ public class PaymentService {
                         HttpStatus.NOT_FOUND,
                         "Reservation with id " + reservationId + " not found"));
 
-        Double refundAmount = reservation.getCancellation().getRefundAmount();
+        BigDecimal refundAmount = reservation.getCancellation().getRefundAmount();
 
         Payment payment = new Payment();
         payment.setPaymentStatus(PaymentStatus.REFUNDED);
@@ -98,22 +117,24 @@ public class PaymentService {
                 .toList();
     }
 
-    public Double getRevenueByBungalowId(Integer bungalowId) {
-        Double revenue = paymentRepository.getRevenueByBungalowId(bungalowId);
-        return revenue != null ? revenue : 0.0;
+    public BigDecimal getRevenueByBungalowId(Integer bungalowId) {
+
+        BigDecimal revenue =
+                paymentRepository.getRevenueByBungalowId(bungalowId);
+
+        return revenue != null
+                ? revenue
+                : BigDecimal.ZERO;
     }
 
     public void cancelPayments(Integer reservationId){
         List<Payment> payments = paymentRepository.findByReservationId(reservationId);
         payments.forEach(
-                payment -> payment.setPaymentStatus(PaymentStatus.CANCELLED)
+                payment -> payment.setPaymentStatus(PaymentStatus.REFUNDED)
         );
     }
 
     //Helper Methods
-
-    private static final double MAX_PAYMENT_AMOUNT = 1_000_000;
-
     private void validatePaymentRequest(PaymentRequest request) {
 
         if (request == null) {
@@ -133,7 +154,7 @@ public class PaymentService {
         }
 
         if (request.getAmount() == null ||
-                request.getAmount() <= 0) {
+                request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
 
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -141,7 +162,8 @@ public class PaymentService {
             );
         }
 
-        if (request.getAmount() > MAX_PAYMENT_AMOUNT) {
+        if (request.getAmount().compareTo(MAX_PAYMENT_AMOUNT) > 0) {
+
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Payment amount exceeds maximum allowed"

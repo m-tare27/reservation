@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -78,7 +79,7 @@ public class ExcelService {
                 row.createCell(COL_GUEST_NAME).setCellValue(reservation.getGuest().getName());
                 row.createCell(COL_GUEST_EMAIL).setCellValue(reservation.getGuest().getEmail());
                 row.createCell(COL_RESERVATION_STATUS).setCellValue(reservation.getReservationStatus().toString());
-                row.createCell(COL_TOTAL_AMOUNT).setCellValue(reservation.getTotalAmount());
+                row.createCell(COL_TOTAL_AMOUNT).setCellValue(reservation.getTotalAmount().doubleValue());
             }
             workbook.write(out);
 
@@ -151,7 +152,8 @@ public class ExcelService {
 
         // Parse numeric values
         //reservation.setBungalowId((int) getCellNumericValue(row, COL_BUNGALOW_ID, "bungalow ID"));
-        reservation.setTotalAmount(getCellNumericValue(row, COL_TOTAL_AMOUNT, "total amount"));
+        BigDecimal amount = new BigDecimal(getCellNumericValue(row, COL_TOTAL_AMOUNT, "total amount"));
+        reservation.setTotalAmount(amount);
 
         // Parse status
         String statusStr = getCellStringValue(row, COL_RESERVATION_STATUS);

@@ -57,15 +57,14 @@ public class CommissionService {
 //                );
 //            }
 
-            BigDecimal commissionAmount =
-                    BigDecimal.valueOf(reservation.getTotalAmount())
+            BigDecimal commissionAmount = reservation.getTotalAmount()
                             .multiply(BigDecimal.valueOf(travelAgent.getCommissionRate()))
                             .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
             Commission commission = new Commission();
             commission.setReservation(reservation);
             commission.setTravelAgent(travelAgent);
-            commission.setAmount(commissionAmount.doubleValue());
+            commission.setAmount(commissionAmount);
 
             Commission savedCommission = commissionRepository.save(commission);
             Payment payment = new Payment();

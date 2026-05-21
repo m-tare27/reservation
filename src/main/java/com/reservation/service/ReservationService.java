@@ -64,7 +64,7 @@ public class ReservationService {
                 .multiply(BigDecimal.valueOf(nights));
 
         Reservation reservation = new Reservation();
-        Mapper.mapRequestToEntity(reservation , request , guest , bungalow , totalAmount.doubleValue());
+        Mapper.mapRequestToEntity(reservation , request , guest , bungalow , totalAmount);
 
         boolean available = availabilityRepository.findAvailableInterval(request.getBungalowId() , request.getArrivalDate() , request.getDepartureDate()).isPresent();
         reservation.setReservationStatus(available ? ReservationStatus.PENDING : ReservationStatus.WAITLIST);

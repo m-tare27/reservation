@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 public class ReservationConfirmedEvent {
     private String email;
@@ -11,9 +13,9 @@ public class ReservationConfirmedEvent {
     private Integer reservationId;
 
     private Integer guestId;
-    private Double totalAmount;
+    private BigDecimal totalAmount;
 
-    public ReservationConfirmedEvent(String email, String guestName, Integer reservationId , Integer guestId, Double totalAmount) {
+    public ReservationConfirmedEvent(String email, String guestName, Integer reservationId , Integer guestId, BigDecimal totalAmount) {
         this.email = email;
         this.guestName = guestName;
         this.reservationId = reservationId;
