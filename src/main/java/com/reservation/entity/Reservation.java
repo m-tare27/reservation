@@ -43,8 +43,9 @@ public class Reservation {
     @JoinColumn(name = "guest_id")
     Guest guest;
 
-    @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL)
-    List<Payment> payments;
+    @OneToMany(mappedBy = "reservation",
+            cascade = CascadeType.ALL)
+    private List<Payment> payments;
 
     @OneToOne(mappedBy = "reservation")
     private Commission commission;

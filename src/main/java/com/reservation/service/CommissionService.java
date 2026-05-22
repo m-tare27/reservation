@@ -25,47 +25,54 @@ public class CommissionService {
     private final TravelAgentRepository travelAgentRepository;
     private final CommissionPayoutRepository payoutRepository;
 
-        public void createCommissionForReservation(Integer reservationId , Integer travelAgentId) {
+    public void createCommissionForReservation(Integer reservationId, Integer travelAgentId) {
 
-            if (commissionRepository.existsByReservationId(reservationId)) {
-                throw new ResponseStatusException(
-                        HttpStatus.CONFLICT,
-                        "Commission already exists for reservation ID: " + reservationId
-                );
-            }
-
-            TravelAgent travelAgent = travelAgentRepository.findById(travelAgentId)
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Travel Agent not found with ID: " + travelAgentId
-                    ));
-
-            Reservation reservation = reservationRepository.findByIdForUpdate(reservationId)
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Reservation not found with ID: " + reservationId
-                    ));
-
-            BigDecimal commissionAmount = reservation.getTotalAmount()
-                            .multiply(BigDecimal.valueOf(travelAgent.getCommissionRate()))
-                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-
-            Commission commission = new Commission();
-            commission.setReservation(reservation);
-            commission.setTravelAgent(travelAgent);
-            commission.setAmount(commissionAmount);
-
-            Commission savedCommission = commissionRepository.save(commission);
-
-            CommissionPayout payout = new CommissionPayout();
-            payout.setCommission(savedCommission);
-            payout.setAmount(savedCommission.getAmount());
-            payout.setPayoutStatus(PayoutStatus.PENDING);
-
-            payoutRepository.save(payout);
-
-            reservation.setCommission(savedCommission);
+        if (commissionRepository.existsByReservationId(reservationId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Commission already exists for reservation ID: " + reservationId
+            );
         }
+
+        TravelAgent travelAgent = travelAgentRepository.findById(travelAgentId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Travel Agent not found with ID: " + travelAgentId
+                ));
+
+        Reservation reservation = reservationRepository.findByIdForUpdate(reservationId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Reservation not found with ID: " + reservationId
+                ));
+
+        if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Commission can only be created for CONFIRMED reservations"
+            );
+        }
+
+        BigDecimal commissionAmount = reservation.getTotalAmount()
+                .multiply(BigDecimal.valueOf(travelAgent.getCommissionRate()))
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+        Commission commission = new Commission();
+        commission.setReservation(reservation);
+        commission.setTravelAgent(travelAgent);
+        commission.setAmount(commissionAmount);
+
+        Commission savedCommission = commissionRepository.save(commission);
+
+        CommissionPayout payout = new CommissionPayout();
+        payout.setCommission(savedCommission);
+        payout.setAmount(savedCommission.getAmount());
+        payout.setPayoutStatus(PayoutStatus.PENDING);
+
+        payoutRepository.save(payout);
+
+        reservation.setCommission(savedCommission);
+    }
 
     public void completeCommissionPayout(Integer commissionId) {
 
