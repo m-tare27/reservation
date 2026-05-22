@@ -20,15 +20,15 @@ public class Commission {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @OneToOne(mappedBy = "commission")
+    @OneToOne
+    @JoinColumn(name = "reservation_id",
+            nullable = false,
+            unique = true)
     private Reservation reservation;
 
     @ManyToOne
     @JoinColumn(name = "travel_agent_id")
     private TravelAgent travelAgent;
-
-    @OneToMany(mappedBy = "commission", cascade = CascadeType.ALL)
-    private List<Payment> payments;
 
     @OneToOne(mappedBy = "commission",
             cascade = CascadeType.ALL,
