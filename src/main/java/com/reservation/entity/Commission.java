@@ -29,4 +29,9 @@ public class Commission {
 
     @OneToMany(mappedBy = "commission", cascade = CascadeType.ALL)
     private List<Payment> payments;
+
+    @OneToOne(mappedBy = "commission",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private CommissionPayout payout;
 }
