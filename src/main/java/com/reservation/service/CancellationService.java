@@ -13,6 +13,7 @@ import com.reservation.repository.ReservationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,6 +24,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+
+import static com.reservation.specification.CancellationSpecification.*;
 
 @Service
 @RequiredArgsConstructor
@@ -159,6 +162,24 @@ public class CancellationService {
                     cancellationRepository.findByRefundStatus(refundStatus));
         }
         return convertToResponseList(cancellationRepository.findAll());
+    }
+
+    public List<CancellationResponse> getCancellations(
+            Integer cancellationId,
+            RefundStatus status,
+            Integer reservationId,
+            Integer policyId
+    ) {
+        Specification<Cancellation> spec = Specification
+                .where(hasId(cancellationId))
+                .and(hasStatus(status))
+                .and(hasReservation(reservationId))
+                .and(hasCancellationPolicy(policyId));
+
+        return cancellationRepository.findAll(spec)
+                .stream()
+                .map(CancellationResponse::new)
+                .toList();
     }
 
     public CancellationResponse updateRefundStatus(Integer id, RefundStatus refundStatus) {

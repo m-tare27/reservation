@@ -5,6 +5,7 @@ import com.reservation.enums.RefundStatus;
 import com.reservation.entity.Reservation;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface CancellationRepository  extends JpaRepository<Cancellation , Integer> {
+public interface CancellationRepository  extends JpaRepository<Cancellation , Integer> , JpaSpecificationExecutor<Cancellation> {
     boolean existsByCancellationPolicy_Id(Integer policyId);
 
     Optional<Cancellation> findByReservation(Reservation reservation);

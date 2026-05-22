@@ -34,12 +34,13 @@ public class CancellationController {
     @GetMapping
     @Operation(summary = "Get cancellations", description = "Retrieves a list of cancellations with optional filters")
     public ResponseEntity<List<CancellationResponse>> getCancellations(
-            @RequestParam(required = false) LocalDateTime cancelledAt,
-            @RequestParam(required = false) Long daysBeforeCheckIn,
+            @RequestParam(required = false) Integer cancellationId,
+            @RequestParam(required = false) Integer reservationId,
+            @RequestParam(required = false) Integer cancellationPolicyId,
             @RequestParam(required = false) RefundStatus refundStatus) {
 
         List<CancellationResponse> response = cancellationService.getCancellations(
-                cancelledAt, daysBeforeCheckIn, refundStatus);
+                cancellationId , refundStatus , reservationId , cancellationPolicyId);
         return ResponseEntity.ok(response);
     }
 
