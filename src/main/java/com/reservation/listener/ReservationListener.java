@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class ReservationListener {
     private final CommissionService commissionService;
-    private final AvailabilityService availabilityService;
 
     @RabbitListener(queues = RabbitConfig.COMMISSION_QUEUE)
     public void handleReservationCreationEvent(ReservationCreationEvent event) {

@@ -50,13 +50,6 @@ public class CommissionService {
                             "Reservation not found with ID: " + reservationId
                     ));
 
-//            if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
-//                throw new ResponseStatusException(
-//                        HttpStatus.BAD_REQUEST,
-//                        "Commission can only be created for CONFIRMED reservations"
-//                );
-//            }
-
             BigDecimal commissionAmount = reservation.getTotalAmount()
                             .multiply(BigDecimal.valueOf(travelAgent.getCommissionRate()))
                             .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
