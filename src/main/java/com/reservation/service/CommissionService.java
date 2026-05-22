@@ -1,7 +1,6 @@
 package com.reservation.service;
 
 import com.reservation.entity.*;
-import com.reservation.enums.PaymentStatus;
 import com.reservation.enums.PayoutStatus;
 import com.reservation.enums.ReservationStatus;
 import com.reservation.repository.*;
@@ -22,7 +21,6 @@ public class CommissionService {
 
     private final CommissionRepository commissionRepository;
     private final ReservationRepository reservationRepository;
-    private final TravelAgentRepository travelAgentRepository;
     private final CommissionPayoutRepository payoutRepository;
 
     public void createCommissionForReservation(Integer reservationId) {
@@ -48,6 +46,12 @@ public class CommissionService {
         }
 
         TravelAgent travelAgent = reservation.getTravelAgent();
+        if (travelAgent == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Reservation has no associated travel agent"
+            );
+        }
 
         BigDecimal commissionAmount = reservation.getTotalAmount()
                 .multiply(BigDecimal.valueOf(travelAgent.getCommissionRate()))

@@ -2,10 +2,7 @@ package com.reservation.mapper;
 
 import com.reservation.dto.CancellationPolicyRequest;
 import com.reservation.dto.ReservationRequest;
-import com.reservation.entity.Bungalow;
-import com.reservation.entity.CancellationPolicy;
-import com.reservation.entity.Guest;
-import com.reservation.entity.Reservation;
+import com.reservation.entity.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -27,5 +24,16 @@ public class Mapper {
         reservation.setTotalAmount(totalAmount);
         reservation.setBookingSource(request.getBookingSource());
         reservation.setCreatedAt(LocalDateTime.now());
+    }
+
+    public static void mapRequestToEntity(Reservation reservation, ReservationRequest request, Guest guest, Bungalow bungalow, TravelAgent travelAgent, BigDecimal totalAmount) {
+        reservation.setGuest(guest);
+        reservation.setBungalow(bungalow);
+        reservation.setArrivalDate(request.getArrivalDate());
+        reservation.setDepartureDate(request.getDepartureDate());
+        reservation.setTotalAmount(totalAmount);
+        reservation.setBookingSource(request.getBookingSource());
+        reservation.setCreatedAt(LocalDateTime.now());
+        reservation.setTravelAgent(travelAgent);
     }
 }

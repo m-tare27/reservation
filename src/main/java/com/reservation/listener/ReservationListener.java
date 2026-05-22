@@ -1,15 +1,12 @@
 package com.reservation.listener;
 
-import com.reservation.config.RabbitConfig;
 import com.reservation.dto.event.ReservationCreationEvent;
-import com.reservation.enums.ReservationStatus;
-import com.reservation.service.AvailabilityService;
 import com.reservation.service.CommissionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 @RequiredArgsConstructor
@@ -17,7 +14,9 @@ import org.springframework.stereotype.Component;
 public class ReservationListener {
     private final CommissionService commissionService;
 
-    @RabbitListener(queues = RabbitConfig.COMMISSION_QUEUE)
+    @TransactionalEventListener(
+            phase = TransactionPhase.AFTER_COMMIT
+    )
     public void handleReservationCreationEvent(ReservationCreationEvent event) {
         log.info("Received reservation event for reservation ID: {}", event.getReservationId());
 
