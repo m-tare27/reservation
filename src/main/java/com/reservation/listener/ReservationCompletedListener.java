@@ -16,7 +16,7 @@ public class ReservationCompletedListener {
     @RabbitListener(queues = RabbitConfig.RESERVATION_COMPLETED_QUEUE)
     public void handleReservationCompletedEvent(ReservationCompletedEvent event) {
         if (event.getCommissionId() != null) {
-            commissionService.markCommissionPaymentsAsCompleted(event.getCommissionId());
+            commissionService.completeCommissionPayout(event.getCommissionId());
         }
     }
 }

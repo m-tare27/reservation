@@ -1,15 +1,10 @@
 package com.reservation.service;
 
-import com.reservation.entity.Commission;
-import com.reservation.entity.Payment;
-import com.reservation.entity.Reservation;
-import com.reservation.entity.TravelAgent;
+import com.reservation.entity.*;
 import com.reservation.enums.PaymentStatus;
+import com.reservation.enums.PayoutStatus;
 import com.reservation.enums.ReservationStatus;
-import com.reservation.repository.CommissionRepository;
-import com.reservation.repository.PaymentRepository;
-import com.reservation.repository.ReservationRepository;
-import com.reservation.repository.TravelAgentRepository;
+import com.reservation.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +23,7 @@ public class CommissionService {
     private final CommissionRepository commissionRepository;
     private final ReservationRepository reservationRepository;
     private final TravelAgentRepository travelAgentRepository;
-    private final PaymentRepository paymentRepository;
+    private final CommissionPayoutRepository payoutRepository;
 
         public void createCommissionForReservation(Integer reservationId , Integer travelAgentId) {
 
@@ -60,36 +56,48 @@ public class CommissionService {
             commission.setAmount(commissionAmount);
 
             Commission savedCommission = commissionRepository.save(commission);
-            Payment payment = new Payment();
 
-            payment.setCommission(savedCommission);
-            payment.setAmount(savedCommission.getAmount());
-            payment.setPaymentStatus(PaymentStatus.PENDING);
-            paymentRepository.save(payment);
-            
+            CommissionPayout payout = new CommissionPayout();
+            payout.setCommission(savedCommission);
+            payout.setAmount(savedCommission.getAmount());
+            payout.setPayoutStatus(PayoutStatus.PENDING);
+
+            payoutRepository.save(payout);
+
             reservation.setCommission(savedCommission);
         }
 
-        public void markCommissionPaymentsAsCompleted(Integer commissionId) {
-            Commission commission = commissionRepository.findByIdForUpdate(commissionId)
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Commission not found with ID: " + commissionId
-                    ));
+    public void completeCommissionPayout(Integer commissionId) {
 
-            if (commission.getPayments() != null) {
-                commission.getPayments().forEach(payment -> {
-                    validatePaymentTransition(payment.getPaymentStatus(), PaymentStatus.COMPLETED);
-                    payment.setPaymentStatus(PaymentStatus.COMPLETED);
-                });
-            }
+        Commission commission = commissionRepository.findByIdForUpdate(commissionId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Commission not found with ID: " + commissionId
+                ));
 
-            commissionRepository.save(commission);
+        CommissionPayout payout = commission.getPayout();
+
+        if (payout == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "No payout exists for commission"
+            );
         }
 
-    private void validatePaymentTransition(
-            PaymentStatus currentStatus,
-            PaymentStatus newStatus
+        validatePayoutTransition(
+                payout.getPayoutStatus(),
+                PayoutStatus.COMPLETED
+        );
+
+        payout.setPayoutStatus(PayoutStatus.COMPLETED);
+        payout.setPayoutDate(LocalDate.now());
+
+        payoutRepository.save(payout);
+    }
+
+    private void validatePayoutTransition(
+            PayoutStatus currentStatus,
+            PayoutStatus newStatus
     ) {
 
         if (currentStatus == newStatus) {
@@ -102,8 +110,8 @@ public class CommissionService {
         switch (currentStatus) {
 
             case PENDING -> {
-                if (newStatus != PaymentStatus.COMPLETED &&
-                        newStatus != PaymentStatus.CANCELLED) {
+                if (newStatus != PayoutStatus.COMPLETED &&
+                        newStatus != PayoutStatus.CANCELLED) {
 
                     throw new ResponseStatusException(
                             HttpStatus.BAD_REQUEST,
