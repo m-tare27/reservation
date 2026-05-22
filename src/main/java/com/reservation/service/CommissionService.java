@@ -25,7 +25,7 @@ public class CommissionService {
     private final TravelAgentRepository travelAgentRepository;
     private final CommissionPayoutRepository payoutRepository;
 
-    public void createCommissionForReservation(Integer reservationId, Integer travelAgentId) {
+    public void createCommissionForReservation(Integer reservationId) {
 
         if (commissionRepository.existsByReservationId(reservationId)) {
             throw new ResponseStatusException(
@@ -33,12 +33,6 @@ public class CommissionService {
                     "Commission already exists for reservation ID: " + reservationId
             );
         }
-
-        TravelAgent travelAgent = travelAgentRepository.findById(travelAgentId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Travel Agent not found with ID: " + travelAgentId
-                ));
 
         Reservation reservation = reservationRepository.findByIdForUpdate(reservationId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -52,6 +46,8 @@ public class CommissionService {
                     "Commission can only be created for CONFIRMED reservations"
             );
         }
+
+        TravelAgent travelAgent = reservation.getTravelAgent();
 
         BigDecimal commissionAmount = reservation.getTotalAmount()
                 .multiply(BigDecimal.valueOf(travelAgent.getCommissionRate()))

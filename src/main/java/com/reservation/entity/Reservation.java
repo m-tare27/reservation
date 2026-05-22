@@ -53,4 +53,8 @@ public class Reservation {
     @ManyToOne
     @JoinColumn(name = "bungalow_id")
     Bungalow bungalow;
+
+    @ManyToOne
+    @JoinColumn(name = "travel_agent_id")
+    private TravelAgent travelAgent;
 }

@@ -25,8 +25,7 @@ public class ReservationListener {
             log.info("Processing commission for travel agency ID: {}", event.getTravelAgencyId());
             try {
                 commissionService.createCommissionForReservation(
-                        event.getReservationId(),
-                        event.getTravelAgencyId()
+                        event.getReservationId()
                 );
             } catch (Exception ex) {
                 log.error("Failed to create commission", ex);
