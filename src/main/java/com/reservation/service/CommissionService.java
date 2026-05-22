@@ -70,14 +70,6 @@ public class CommissionService {
             reservation.setCommission(savedCommission);
         }
 
-        public Commission getCommissionByReservationId(Integer reservationId) {
-            return commissionRepository.findByReservationId(reservationId)
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Commission not found for reservation ID: " + reservationId
-                    ));
-        }
-
         public void markCommissionPaymentsAsCompleted(Integer commissionId) {
             Commission commission = commissionRepository.findByIdForUpdate(commissionId)
                     .orElseThrow(() -> new ResponseStatusException(
